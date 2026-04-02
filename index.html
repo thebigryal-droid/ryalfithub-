@@ -37,7 +37,6 @@
         .btn-info { background: var(--info); color: white; }
         .btn-wa { background: #34C759; color: white; margin-bottom: 8px; }
         .btn-pdf { background: #1d1d1f; color: white; margin-bottom: 8px; }
-        .btn-vip { background: var(--vip); color: white; margin-bottom: 15px; }
         .btn-sub { background: #f5f5f7; color: #1d1d1f; font-size: 11px; border: 1px solid var(--border); padding: 8px 12px; width: auto; font-weight: 600; }
         .btn-action { background: transparent; color: var(--info); border: 1px solid var(--info); padding: 4px 8px; font-size: 10px; border-radius: 6px; width: auto; font-weight: 600; margin-left: 5px;}
         .btn-action.danger { color: var(--danger); border-color: var(--danger); }
@@ -390,16 +389,19 @@
     let clients = JSON.parse(localStorage.getItem('ryal_pro_v9')) || [];
     let shifts = JSON.parse(localStorage.getItem('ryal_shifts_v9')) || [];
     let leads = JSON.parse(localStorage.getItem('ryal_leads_v9')) || [];
-    const today = new Date().toISOString().split('T')[0];
-    let curID = null; let curExName = ""; let lastPerfData = null;
-    let tonnageChartInst = null;
-
-    const workoutDB = {
+    
+    // NEW: Persistent Workout DB
+    let workoutDB = JSON.parse(localStorage.getItem('ryal_workoutDB_v9')) || {
         "Pull (Back & Biceps)": ["Pull-ups", "Lat Pulldown", "Seated Cable Row", "Barbell Row", "Barbell Bicep Curl", "Hammer Curl"],
         "Push (Chest, Shoulders, Triceps)": ["Bench Press", "Incline DB Press", "Cable Crossover", "Overhead Press", "Lateral Raises", "Triceps Pushdown"],
         "Legs (Quads, Hams, Glutes)": ["Barbell Squats", "Leg Press", "Leg Extensions", "Romanian Deadlift", "Hamstring Curls"],
-        "Core & Functional": ["Plank", "Russian Twists", "Leg Raises", "Kettlebell Swings"]
+        "Core & Functional": ["Plank", "Russian Twists", "Leg Raises", "Kettlebell Swings"],
+        "Custom Exercises": [] // Added to store your custom entries
     };
+
+    const today = new Date().toISOString().split('T')[0];
+    let curID = null; let curExName = ""; let lastPerfData = null;
+    let tonnageChartInst = null;
 
     /* --- SEARCH & SUGGEST EXERCISES --- */
     function searchEx(val) {
@@ -412,34 +414,42 @@
         if (!matches.some(m => m.toLowerCase() === searchLower)) { matches.push(val + " (Custom)"); }
         resDiv.innerHTML = matches.map(ex => {
             let actualName = ex.replace(" (Custom)", "");
-            return `<div style="padding:10px; font-size:13px; font-weight:500; color:#1d1d1f; border-bottom:1px solid #e5e5ea; cursor:pointer;" onclick="applySearchedEx('${actualName}')">${ex}</div>`;
+            return `<div style="padding:10px; font-size:13px; font-weight:500; color:#1d1d1f; border-bottom:1px solid #e5e5ea; cursor:pointer;" onclick="applySearchedEx('${actualName}', ${ex.includes('(Custom)')})">${ex}</div>`;
         }).join('');
         resDiv.style.display = 'block';
     }
 
-    function applySearchedEx(name) {
+    function applySearchedEx(name, isCustom) {
         document.getElementById('searchRes').style.display = 'none'; document.getElementById('exSearch').value = "";
         document.querySelectorAll('.ex-tag').forEach(e => e.classList.remove('active'));
-        curExName = name; document.getElementById('curEx').innerText = name;
         
+        // Save Custom Exercise to DB if it's new
+        if(isCustom) {
+            let exists = false;
+            Object.values(workoutDB).forEach(list => { if(list.includes(name)) exists = true; });
+            if(!exists) {
+                workoutDB["Custom Exercises"].push(name);
+                localStorage.setItem('ryal_workoutDB_v9', JSON.stringify(workoutDB));
+            }
+        }
+
+        curExName = name; document.getElementById('curEx').innerText = name;
         const c = clients.find(x => x.id === curID); lastPerfData = null;
         let dates = Object.keys(c.logs).sort().reverse();
         for(let d of dates) {
             let found = c.logs[d].find(l => l.name === name);
             if(found && found.sets && found.sets.length > 0) { lastPerfData = found.sets[0]; break; }
         }
-        
         const recUI = document.getElementById('historyRecall');
         if(lastPerfData && lastPerfData.w && lastPerfData.r) {
             document.getElementById('historyRecallText').innerText = `Last: ${lastPerfData.w}kg × ${lastPerfData.r} (RPE ${lastPerfData.rpe||'-'})`;
             recUI.style.display = 'flex';
         } else { recUI.style.display = 'none'; }
-
         generateSetInputs(); document.getElementById('setForm').style.display = 'block'; 
     }
 
     function exportData() {
-        const dataStr = JSON.stringify({ clients, shifts, leads });
+        const dataStr = JSON.stringify({ clients, shifts, leads, workoutDB }); // Included workoutDB in backup
         const url = URL.createObjectURL(new Blob([dataStr], { type: "application/json" }));
         const a = document.createElement('a'); a.href = url; a.download = `RyalFit_Backup_${today}.json`;
         document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
@@ -454,6 +464,7 @@
                     localStorage.setItem('ryal_pro_v9', JSON.stringify(data.clients));
                     if(data.shifts) localStorage.setItem('ryal_shifts_v9', JSON.stringify(data.shifts));
                     if(data.leads) localStorage.setItem('ryal_leads_v9', JSON.stringify(data.leads));
+                    if(data.workoutDB) localStorage.setItem('ryal_workoutDB_v9', JSON.stringify(data.workoutDB));
                     alert("Backup loaded!"); location.reload(); 
                 }
             } catch(err) { alert("Invalid backup file."); }
@@ -478,175 +489,60 @@
             loadVipPortal();
         } else {
             document.getElementById('attDate').value = today; document.getElementById('logDate').value = today;
-            document.getElementById('reportMonthInput').value = today.slice(0, 7); // Set default month for report
+            document.getElementById('reportMonthInput').value = today.slice(0, 7); 
             render();
         }
     };
 
-    /* --- MONTHLY REVENUE REPORT PDF GENERATOR --- */
     function generateMonthlyReportPDF() {
         let mStr = document.getElementById('reportMonthInput').value; 
         if(!mStr) { alert("Please select a month first."); return; }
-
         let clientRowsHtml = '';
         let sr = 1;
         let totalPtEarnedThisMonth = 0;
-
-        // --- 1. Generate Client Revenue Chart ---
         clients.forEach(c => {
             let doneThisMonth = Object.keys(c.logs).filter(d => d.startsWith(mStr)).length;
             let doneTotal = Object.keys(c.logs).length;
-            
-            // Only show clients who had sessions this month OR have an active package starting this month
             if(doneThisMonth > 0 || (c.startDate && c.startDate.startsWith(mStr))) { 
                 let remSess = Math.max(0, (c.sess || 0) - doneTotal);
                 let amtPerSess = ((c.pay||0)/(1+(c.gst||0))*(c.ret||0))/(c.sess||1);
                 let earnedThisMonth = amtPerSess * doneThisMonth;
                 totalPtEarnedThisMonth += earnedThisMonth;
-                
-                clientRowsHtml += `
-                    <tr>
-                        <td>${sr++}</td>
-                        <td><b>${c.name}</b></td>
-                        <td>${c.receipt || '-'}</td>
-                        <td>₹${c.pay || 0}</td>
-                        <td>${c.startDate || '-'}</td>
-                        <td>${c.endDate || '-'}</td>
-                        <td>${c.sess || 0}</td>
-                        <td style="background:#e5f0ff; font-weight:bold;">${doneThisMonth}</td>
-                        <td>${remSess}</td>
-                        <td>₹${amtPerSess.toFixed(2)}</td>
-                        <td style="color:#007aff; font-weight:bold;">₹${earnedThisMonth.toFixed(2)}</td>
-                    </tr>
-                `;
+                clientRowsHtml += `<tr><td>${sr++}</td><td><b>${c.name}</b></td><td>${c.receipt || '-'}</td><td>₹${c.pay || 0}</td><td>${c.startDate || '-'}</td><td>${c.endDate || '-'}</td><td>${c.sess || 0}</td><td style="background:#e5f0ff; font-weight:bold;">${doneThisMonth}</td><td>${remSess}</td><td>₹${amtPerSess.toFixed(2)}</td><td style="color:#007aff; font-weight:bold;">₹${earnedThisMonth.toFixed(2)}</td></tr>`;
             }
         });
-
         if(clientRowsHtml === '') clientRowsHtml = `<tr><td colspan="11" style="text-align:center; padding:20px; color:#86868b;">No active client sessions recorded for this month.</td></tr>`;
-
-        // --- 2. Generate Salary Chart ---
         let shiftRowsHtml = '';
         let daysWorked = 0;
         let daysLate = 0;
         let daysWeekOff = 0; 
         let daysAbsent = 0;
         let totalSalEarned = 0;
-
-        // Filter and sort shifts for the selected month (1st to 31st)
         let monthShifts = shifts.filter(s => s.date.startsWith(mStr)).sort((a,b) => new Date(a.date) - new Date(b.date));
-        
         monthShifts.forEach(s => {
             if(s.status === 'Present') daysWorked++;
             if(s.isLate) daysLate++;
             if(s.status === 'Week Off') daysWeekOff++;
             if(s.status === 'Absent') daysAbsent++;
-            
             let hrs = 0;
             if(s.inTime && s.outTime) {
                 let [inH, inM] = s.inTime.split(':').map(Number);
                 let [outH, outM] = s.outTime.split(':').map(Number);
                 hrs = ((outH * 60 + outM) - (inH * 60 + inM)) / 60;
             }
-            
             totalSalEarned += (s.pay || 0);
-            
             let statusLabel = s.status;
             if(s.isLate) statusLabel += ' (Late)';
             if(s.isHalfDay) statusLabel += ' (Half Day)';
-
-            shiftRowsHtml += `
-                <tr>
-                    <td>${s.date}</td>
-                    <td>${statusLabel}</td>
-                    <td>${formatTime(s.inTime) || '-'}</td>
-                    <td>${formatTime(s.outTime) || '-'}</td>
-                    <td>${hrs.toFixed(1)} hrs</td>
-                    <td>₹${(s.pay || 0).toFixed(2)}</td>
-                </tr>
-            `;
+            shiftRowsHtml += `<tr><td>${s.date}</td><td>${statusLabel}</td><td>${formatTime(s.inTime) || '-'}</td><td>${formatTime(s.outTime) || '-'}</td><td>${hrs.toFixed(1)} hrs</td><td>₹${(s.pay || 0).toFixed(2)}</td></tr>`;
         });
-
         if(shiftRowsHtml === '') shiftRowsHtml = `<tr><td colspan="6" style="text-align:center; padding:20px; color:#86868b;">No attendance shifts logged for this month.</td></tr>`;
-
         let printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-            <html><head><title>Monthly Financial Report - ${mStr}</title>
-            <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1d1d1f; font-size: 13px; }
-                .header { border-bottom: 2px solid #1d1d1f; padding-bottom: 15px; margin-bottom: 30px; text-align: center; }
-                h1 { margin: 0 0 5px 0; font-size: 24px; font-weight: 800; text-transform: uppercase; }
-                h2 { margin-top: 40px; font-size: 16px; color: #555; text-transform: uppercase; border-bottom: 1px solid #d2d2d7; padding-bottom: 5px; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 12px; }
-                th, td { border: 1px solid #d2d2d7; padding: 10px 8px; text-align: left; }
-                th { background: #f5f5f7; font-weight: 700; text-transform: uppercase; font-size: 10px; color: #555; }
-                .summary-box { background: #f5f5f7; border: 1px solid #d2d2d7; padding: 20px; border-radius: 12px; margin-top: 30px; display: flex; justify-content: space-around; text-align: center; }
-                .sum-val { font-size: 20px; font-weight: 800; color: #1d1d1f; margin-top: 5px; }
-                .sum-label { font-size: 10px; color: #86868b; text-transform: uppercase; font-weight: 700; }
-                .footer { text-align: center; margin-top: 50px; font-size: 10px; color: #86868b; text-transform: uppercase; }
-            </style></head><body>
-            
-            <div class="header">
-                <h1>KENZO FITNESS • TRAINER REPORT</h1>
-                <p style="margin:0; font-weight:600; color:#555;">Month: ${mStr} | Trainer: Abis Rizvi</p>
-            </div>
-
-            <h2>1. Personal Training (PT) Revenue Tracker</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Sr.</th>
-                        <th>Client Name</th>
-                        <th>Receipt No</th>
-                        <th>Pkg ₹</th>
-                        <th>Start Date</th>
-                        <th>End Date</th>
-                        <th>Total Sess.</th>
-                        <th style="background:#007aff; color:white;">Done (Month)</th>
-                        <th>Rem. Sess</th>
-                        <th>Your Cut / Sess</th>
-                        <th style="background:#007aff; color:white;">Earned (Month)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${clientRowsHtml}
-                </tbody>
-            </table>
-            <div style="text-align:right; font-weight:800; font-size:16px;">Total PT Revenue (${mStr}): <span style="color:#007aff;">₹${totalPtEarnedThisMonth.toFixed(2)}</span></div>
-
-            <h2>2. Base Salary & Attendance Chart</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th>In Time</th>
-                        <th>Out Time</th>
-                        <th>Hours</th>
-                        <th>Base Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${shiftRowsHtml}
-                </tbody>
-            </table>
-
-            <div class="summary-box">
-                <div><div class="sum-label">Days Present</div><div class="sum-val">${daysWorked}</div></div>
-                <div><div class="sum-label">Week Offs</div><div class="sum-val">${daysWeekOff}</div></div>
-                <div><div class="sum-label">Absent</div><div class="sum-val" style="color:#ff3b30;">${daysAbsent}</div></div>
-                <div><div class="sum-label">Days Late</div><div class="sum-val" style="color:#ff9500;">${daysLate}</div></div>
-                <div><div class="sum-label">Total Salary Pay</div><div class="sum-val">₹${totalSalEarned.toFixed(2)}</div></div>
-            </div>
-            
-            <div class="footer">Generated securely via Ryal FitHub Clinical Engine</div>
-            <script>setTimeout(() => { window.print(); }, 800);<\/script>
-            </body></html>
-        `);
+        printWindow.document.write(`<html><head><title>Monthly Financial Report - ${mStr}</title><style>body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1d1d1f; font-size: 13px; }.header { border-bottom: 2px solid #1d1d1f; padding-bottom: 15px; margin-bottom: 30px; text-align: center; }h1 { margin: 0 0 5px 0; font-size: 24px; font-weight: 800; text-transform: uppercase; }h2 { margin-top: 40px; font-size: 16px; color: #555; text-transform: uppercase; border-bottom: 1px solid #d2d2d7; padding-bottom: 5px; }table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 12px; }th, td { border: 1px solid #d2d2d7; padding: 10px 8px; text-align: left; }th { background: #f5f5f7; font-weight: 700; text-transform: uppercase; font-size: 10px; color: #555; }.summary-box { background: #f5f5f7; border: 1px solid #d2d2d7; padding: 20px; border-radius: 12px; margin-top: 30px; display: flex; justify-content: space-around; text-align: center; }.sum-val { font-size: 20px; font-weight: 800; color: #1d1d1f; margin-top: 5px; }.sum-label { font-size: 10px; color: #86868b; text-transform: uppercase; font-weight: 700; }.footer { text-align: center; margin-top: 50px; font-size: 10px; color: #86868b; text-transform: uppercase; }</style></head><body><div class="header"><h1>RYAL FitHub • TRAINER REPORT</h1><p style="margin:0; font-weight:600; color:#555;">Month: ${mStr} | Trainer: Abis Rizvi</p></div><h2>1. Personal Training (PT) Revenue Tracker</h2><table><thead><tr><th>Sr.</th><th>Client Name</th><th>Receipt No</th><th>Pkg ₹</th><th>Start Date</th><th>End Date</th><th>Total Sess.</th><th style="background:#007aff; color:white;">Done (Month)</th><th>Rem. Sess</th><th>Your Cut / Sess</th><th style="background:#007aff; color:white;">Earned (Month)</th></tr></thead><tbody>${clientRowsHtml}</tbody></table><div style="text-align:right; font-weight:800; font-size:16px;">Total PT Revenue (${mStr}): <span style="color:#007aff;">₹${totalPtEarnedThisMonth.toFixed(2)}</span></div><h2>2. Base Salary & Attendance Chart</h2><table><thead><tr><th>Date</th><th>Status</th><th>In Time</th><th>Out Time</th><th>Hours</th><th>Base Amount</th></tr></thead><tbody>${shiftRowsHtml}</tbody></table><div class="summary-box"><div><div class="sum-label">Days Present</div><div class="sum-val">${daysWorked}</div></div><div><div class="sum-label">Week Offs</div><div class="sum-val">${daysWeekOff}</div></div><div><div class="sum-label">Absent</div><div class="sum-val" style="color:#ff3b30;">${daysAbsent}</div></div><div><div class="sum-label">Days Late</div><div class="sum-val" style="color:#ff9500;">${daysLate}</div></div><div><div class="sum-label">Total Salary Pay</div><div class="sum-val">₹${totalSalEarned.toFixed(2)}</div></div></div><div class="footer">Generated securely via Ryal FitHub Clinical Engine</div><script>setTimeout(() => { window.print(); }, 800);<\/script></body></html>`);
         printWindow.document.close();
     }
 
 
-    /* --- VIP PORTAL LOGIC --- */
     function generateVIPLink() {
         const c = clients.find(x => x.id === curID);
         const payload = encodeToHash({ n: c.name, g: c.gender, a: c.age, h: c.height, bca: c.bca.slice(0, 10), tdee: c.tdee, macros: c.macros });
@@ -660,14 +556,12 @@
             const data = decodeFromHash(window.location.hash.replace('#vip=', ''));
             document.getElementById('vipName').innerText = data.n;
             document.getElementById('vipMeta').innerText = `${data.g || '-'} | ${data.a ? data.a+' Yrs' : '-'} | ${data.h ? data.h+' cm' : '-'}`;
-            
             if(data.tdee && data.macros) {
                 document.getElementById('vipCal').innerText = data.tdee;
                 document.getElementById('vipPro').innerText = data.macros.p + 'g';
                 document.getElementById('vipCarb').innerText = data.macros.c + 'g';
                 document.getElementById('vipFat').innerText = data.macros.f + 'g';
             }
-
             if(data.bca && data.bca.length > 0) {
                 const chartData = [...data.bca].reverse();
                 const ctx = document.getElementById('vipChart').getContext('2d');
@@ -712,7 +606,6 @@
         const lead = leads.find(l => l.id === id);
         leads = leads.filter(l => l.id !== id);
         localStorage.setItem('ryal_leads_v9', JSON.stringify(leads));
-        
         document.getElementById('regName').value = lead.name || "";
         document.getElementById('regPhone').value = lead.contact || "";
         document.getElementById('sec-leads').classList.remove('active');
@@ -721,11 +614,7 @@
         alert("Lead moved to Profile Setup!");
     }
     
-    function delLead(id) { 
-        if(confirm("Delete this lead permanently?")) {
-            leads = leads.filter(l => l.id !== id); localStorage.setItem('ryal_leads_v9', JSON.stringify(leads)); render(); 
-        }
-    }
+    function delLead(id) { if(confirm("Delete this lead permanently?")) { leads = leads.filter(l => l.id !== id); localStorage.setItem('ryal_leads_v9', JSON.stringify(leads)); render(); } }
 
     let timerInt;
     function startRestTimer(seconds) {
@@ -758,9 +647,7 @@
 
     function regClient() {
         const name = document.getElementById('regName').value; if(!name) return alert("Name required");
-        clients.push({
-            id: Date.now(), name, phone: document.getElementById('regPhone').value, gender: document.getElementById('regGender').value, age: document.getElementById('regAge').value, height: document.getElementById('regHeight').value, receipt: document.getElementById('regReceipt').value, slot: document.getElementById('regSlot').value, level: document.getElementById('regLevel').value, med: document.getElementById('regMed').value, startDate: document.getElementById('regStart').value, endDate: document.getElementById('regEnd').value, prof: document.getElementById('regProf').value, pay: parseFloat(document.getElementById('regPay').value) || 0, sess: parseInt(document.getElementById('regSess').value) || 1, gst: parseFloat(document.getElementById('regGst').value) || 0, ret: parseFloat(document.getElementById('regRet').value) || 0.4, logs: {}, bca: []
-        });
+        clients.push({ id: Date.now(), name, phone: document.getElementById('regPhone').value, gender: document.getElementById('regGender').value, age: document.getElementById('regAge').value, height: document.getElementById('regHeight').value, receipt: document.getElementById('regReceipt').value, slot: document.getElementById('regSlot').value, level: document.getElementById('regLevel').value, med: document.getElementById('regMed').value, startDate: document.getElementById('regStart').value, endDate: document.getElementById('regEnd').value, prof: document.getElementById('regProf').value, pay: parseFloat(document.getElementById('regPay').value) || 0, sess: parseInt(document.getElementById('regSess').value) || 1, gst: parseFloat(document.getElementById('regGst').value) || 0, ret: parseFloat(document.getElementById('regRet').value) || 0.4, logs: {}, bca: [] });
         localStorage.setItem('ryal_pro_v9', JSON.stringify(clients)); alert("Registered!"); render();
     }
     function toggleHistory(id) { const row = document.getElementById(`hist-${id}`); row.style.display = row.style.display === 'none' ? 'table-row' : 'none'; }
@@ -773,16 +660,12 @@
         curID = id; const c = clients.find(x => x.id === id);
         document.getElementById('clientOverlay').style.display = 'block'; document.getElementById('clientMenu').style.display = 'none'; document.getElementById('ovEditForm').style.display = 'none';
         document.getElementById('ovName').innerText = c.name;
-        
         let phoneUI = c.phone ? `<span style="color:var(--info);"><i data-feather="phone" class="icon"></i> ${c.phone}</span> | ` : '';
         document.getElementById('ovTags').innerHTML = `${phoneUI}${c.gender || 'N/A'} | ${c.age?c.age+'Yrs':'-'} | ${c.height?c.height+'cm':'-'} | ${c.prof || 'General'}`;
         document.getElementById('ovReceipt').innerText = c.receipt ? `Rec: ${c.receipt} ${c.slot?'| '+formatTime(c.slot):''} | Valid: ${c.startDate||'?'} to ${c.endDate||'?'}` : '';
-        
         const medBox = document.getElementById('ovMed'); if(c.med && c.med.toLowerCase() !== "none") { medBox.innerHTML = `<i data-feather="alert-triangle" class="icon" style="margin-right:8px;"></i> ALERT: ${c.med}`; medBox.style.display = 'flex'; } else medBox.style.display = 'none';
-        
         document.getElementById('bcaDate').value = today; document.getElementById('scoutEngine').style.display = "none";
         document.getElementById('logWorkoutName').value = ""; document.getElementById('splitSelect').value = ""; document.getElementById('exTagsContainer').innerHTML = ""; document.getElementById('setForm').style.display = 'none';
-        
         if(c.bca && c.bca.length > 0) { 
             const r = c.bca[0]; 
             if(document.getElementById('inWeight')) document.getElementById('inWeight').value = r.w||""; 
@@ -826,7 +709,6 @@
         c.sess = parseInt(document.getElementById('editSess').value) || c.sess;
         c.endDate = document.getElementById('editEnd').value || "";
         c.med = document.getElementById('editMed').value || "";
-        
         localStorage.setItem('ryal_pro_v9', JSON.stringify(clients));
         document.getElementById('ovEditForm').style.display = 'none';
         openOv(curID); render(); 
@@ -852,97 +734,12 @@
     function generateProgressPDF() {
         const c = clients.find(x => x.id === curID);
         if(!c.bca || c.bca.length < 1) return alert("You need at least 1 saved BCA log to generate a report.");
-        
-        let oldest = c.bca[c.bca.length-1];
-        let latest = c.bca[0];
-        
+        let oldest = c.bca[c.bca.length-1]; let latest = c.bca[0];
         let chartData = [...c.bca].reverse();
-        let labels = chartData.map(b => b.date);
-        let weightData = chartData.map(b => b.w);
-        let smmData = chartData.map(b => b.smm);
-        let pbfData = chartData.map(b => b.pbf);
-
-        let ageStr = c.age ? `${c.age} Yrs` : 'N/A';
-        let hStr = c.height ? `${c.height} cm` : 'N/A';
-
+        let labels = chartData.map(b => b.date); let weightData = chartData.map(b => b.w); let smmData = chartData.map(b => b.smm); let pbfData = chartData.map(b => b.pbf);
+        let ageStr = c.age ? `${c.age} Yrs` : 'N/A'; let hStr = c.height ? `${c.height} cm` : 'N/A';
         let printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-            <html><head><title>Monthly Progress - ${c.name}</title>
-            <script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>
-            <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1d1d1f; background: #fff; }
-                .header { border-bottom: 2px solid #1d1d1f; padding-bottom: 15px; margin-bottom: 30px; text-align: center; }
-                h1 { margin: 0 0 5px 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; text-transform: uppercase; }
-                .meta { font-size: 13px; color: #555; font-weight: 600; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
-                .grid { display: flex; gap: 20px; margin-bottom: 30px; }
-                .box { flex: 1; border: 1px solid #d2d2d7; padding: 20px; border-radius: 12px; background: #f5f5f7; }
-                h3 { margin-top: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #86868b; border-bottom: 1px solid #d2d2d7; padding-bottom: 8px; margin-bottom: 15px; }
-                .row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; font-weight: 600; }
-                .val { color: #1d1d1f; font-weight: 800; }
-                .chart-container { margin-top: 40px; border: 1px solid #d2d2d7; padding: 20px; border-radius: 12px; background: #fff; }
-                .footer { text-align: center; margin-top: 50px; font-size: 11px; color: #86868b; text-transform: uppercase; letter-spacing: 1px; }
-            </style></head><body>
-            
-            <div class="header">
-                <h1>${c.name}</h1>
-                <div class="meta">
-                    <span>AGE: ${ageStr}</span> | 
-                    <span>HEIGHT: ${hStr}</span> | 
-                    <span>WEIGHT: ${latest.w || '-'}kg</span> | 
-                    <span>START: ${c.startDate || 'N/A'}</span> | 
-                    <span>END: ${c.endDate || 'N/A'}</span>
-                </div>
-            </div>
-            
-            <div class="grid">
-                <div class="box">
-                    <h3>Before (Record: ${oldest.date})</h3>
-                    <div class="row"><span>Weight</span> <span class="val">${oldest.w || '-'} kg</span></div>
-                    <div class="row"><span>SMM (Muscle)</span> <span class="val">${oldest.smm || '-'} kg</span></div>
-                    <div class="row"><span>PBF (Fat)</span> <span class="val">${oldest.pbf || '-'} %</span></div>
-                    <div class="row"><span>Visceral Fat</span> <span class="val">Lvl ${oldest.visFat || '-'}</span></div>
-                    <div class="row"><span>InBody Score</span> <span class="val">${oldest.score || '-'} / 100</span></div>
-                </div>
-                <div class="box">
-                    <h3>After (Record: ${latest.date})</h3>
-                    <div class="row"><span>Weight</span> <span class="val">${latest.w || '-'} kg</span></div>
-                    <div class="row"><span>SMM (Muscle)</span> <span class="val">${latest.smm || '-'} kg</span></div>
-                    <div class="row"><span>PBF (Fat)</span> <span class="val">${latest.pbf || '-'} %</span></div>
-                    <div class="row"><span>Visceral Fat</span> <span class="val">Lvl ${latest.visFat || '-'}</span></div>
-                    <div class="row"><span>InBody Score</span> <span class="val">${latest.score || '-'} / 100</span></div>
-                </div>
-            </div>
-
-            <div class="chart-container">
-                <h3 style="text-align:center; border:none; margin-bottom:20px; color:#1d1d1f;">BODY COMPOSITION TREND</h3>
-                <canvas id="bcaChart" height="100"></canvas>
-            </div>
-            
-            <div class="footer">Kenzo Fitness • Prepared by Abis Rizvi • Ryal FitHub Clinical Engine</div>
-
-            <script>
-                window.onload = function() {
-                    const ctx = document.getElementById('bcaChart').getContext('2d');
-                    new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: ${JSON.stringify(labels)},
-                            datasets: [
-                                { label: 'Weight (kg)', data: ${JSON.stringify(weightData)}, borderColor: '#1d1d1f', backgroundColor: 'transparent', tension: 0.3, borderWidth: 2 },
-                                { label: 'Muscle (SMM kg)', data: ${JSON.stringify(smmData)}, borderColor: '#34C759', backgroundColor: 'transparent', tension: 0.3, borderWidth: 2 },
-                                { label: 'Fat (PBF %)', data: ${JSON.stringify(pbfData)}, borderColor: '#ff3b30', backgroundColor: 'transparent', tension: 0.3, borderWidth: 2 }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: { legend: { position: 'bottom', labels: { font: { family: '-apple-system', size: 12, weight: '600' } } } },
-                            animation: { onComplete: function() { setTimeout(() => { window.print(); }, 500); } }
-                        }
-                    });
-                };
-            <\/script>
-            </body></html>
-        `);
+        printWindow.document.write(`<html><head><title>Monthly Progress - ${c.name}</title><script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script><style>body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1d1d1f; background: #fff; }.header { border-bottom: 2px solid #1d1d1f; padding-bottom: 15px; margin-bottom: 30px; text-align: center; }h1 { margin: 0 0 5px 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; text-transform: uppercase; }.meta { font-size: 13px; color: #555; font-weight: 600; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }.grid { display: flex; gap: 20px; margin-bottom: 30px; }.box { flex: 1; border: 1px solid #d2d2d7; padding: 20px; border-radius: 12px; background: #f5f5f7; }h3 { margin-top: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #86868b; border-bottom: 1px solid #d2d2d7; padding-bottom: 8px; margin-bottom: 15px; }.row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; font-weight: 600; }.val { color: #1d1d1f; font-weight: 800; }.chart-container { margin-top: 40px; border: 1px solid #d2d2d7; padding: 20px; border-radius: 12px; background: #fff; }.footer { text-align: center; margin-top: 50px; font-size: 11px; color: #86868b; text-transform: uppercase; letter-spacing: 1px; }</style></head><body><div class="header"><h1>${c.name}</h1><div class="meta"><span>AGE: ${ageStr}</span> | <span>HEIGHT: ${hStr}</span> | <span>WEIGHT: ${latest.w || '-'}kg</span> | <span>START: ${c.startDate || 'N/A'}</span> | <span>END: ${c.endDate || 'N/A'}</span></div></div><div class="grid"><div class="box"><h3>Before (Record: ${oldest.date})</h3><div class="row"><span>Weight</span> <span class="val">${oldest.w || '-'} kg</span></div><div class="row"><span>SMM (Muscle)</span> <span class="val">${oldest.smm || '-'} kg</span></div><div class="row"><span>PBF (Fat)</span> <span class="val">${oldest.pbf || '-'} %</span></div><div class="row"><span>Visceral Fat</span> <span class="val">Lvl ${oldest.visFat || '-'}</span></div><div class="row"><span>InBody Score</span> <span class="val">${oldest.score || '-'} / 100</span></div></div><div class="box"><h3>After (Record: ${latest.date})</h3><div class="row"><span>Weight</span> <span class="val">${latest.w || '-'} kg</span></div><div class="row"><span>SMM (Muscle)</span> <span class="val">${latest.smm || '-'} kg</span></div><div class="row"><span>PBF (Fat)</span> <span class="val">${latest.pbf || '-'} %</span></div><div class="row"><span>Visceral Fat</span> <span class="val">Lvl ${latest.visFat || '-'}</span></div><div class="row"><span>InBody Score</span> <span class="val">${latest.score || '-'} / 100</span></div></div></div><div class="chart-container"><h3 style="text-align:center; border:none; margin-bottom:20px; color:#1d1d1f;">BODY COMPOSITION TREND</h3><canvas id="bcaChart" height="100"></canvas></div><div class="footer">Kenzo Fitness • Prepared by Abis Rizvi • Ryal FitHub Clinical Engine</div><script>window.onload = function() { const ctx = document.getElementById('bcaChart').getContext('2d'); new Chart(ctx, { type: 'line', data: { labels: ${JSON.stringify(labels)}, datasets: [ { label: 'Weight (kg)', data: ${JSON.stringify(weightData)}, borderColor: '#1d1d1f', backgroundColor: 'transparent', tension: 0.3, borderWidth: 2 }, { label: 'Muscle (SMM kg)', data: ${JSON.stringify(smmData)}, borderColor: '#34C759', backgroundColor: 'transparent', tension: 0.3, borderWidth: 2 }, { label: 'Fat (PBF %)', data: ${JSON.stringify(pbfData)}, borderColor: '#ff3b30', backgroundColor: 'transparent', tension: 0.3, borderWidth: 2 } ] }, options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { family: '-apple-system', size: 12, weight: '600' } } } }, animation: { onComplete: function() { setTimeout(() => { window.print(); }, 500); } } } }); };<\/script></body></html>`);
         printWindow.document.close();
     }
 
@@ -974,15 +771,8 @@
         const bmr = parseFloat(document.getElementById('inBmr')?.value) || 0;
         if(w === 0) return alert("Enter Weight to save log.");
         const existingIdx = c.bca.findIndex(b => b.date === d);
-        if(existingIdx >= 0) { 
-            if(confirm("Overwrite?")) c.bca[existingIdx] = { date: d, w, smm, pbf, bmi, score, visFat, bmr }; 
-            else return; 
-        } else {
-            c.bca.push({ date: d, w, smm, pbf, bmi, score, visFat, bmr });
-        }
-        c.bca.sort((a,b) => new Date(b.date) - new Date(a.date)); 
-        localStorage.setItem('ryal_pro_v9', JSON.stringify(clients)); 
-        renderBcaHistory();
+        if(existingIdx >= 0) { if(confirm("Overwrite?")) c.bca[existingIdx] = { date: d, w, smm, pbf, bmi, score, visFat, bmr }; else return; } else { c.bca.push({ date: d, w, smm, pbf, bmi, score, visFat, bmr }); }
+        c.bca.sort((a,b) => new Date(b.date) - new Date(a.date)); localStorage.setItem('ryal_pro_v9', JSON.stringify(clients)); renderBcaHistory();
     }
     
     function renderBcaHistory() {
@@ -996,9 +786,7 @@
         const c = clients.find(x => x.id === curID);
         c.bca = c.bca.filter(b => b.date !== date);
         localStorage.setItem('ryal_pro_v9', JSON.stringify(clients));
-        if(c.bca.length === 0) {
-            document.querySelectorAll('#inWeight,#inSmm,#inPbf,#inBmi,#inScore,#inVisFat,#inBmr').forEach(el => { if(el) el.value=""; });
-        }
+        if(c.bca.length === 0) { document.querySelectorAll('#inWeight,#inSmm,#inPbf,#inBmi,#inScore,#inVisFat,#inBmr').forEach(el => { if(el) el.value=""; }); }
         renderBcaHistory();
     }
 
@@ -1007,35 +795,17 @@
         const pbf = parseFloat(document.getElementById('inPbf').value) || 0; const w = parseFloat(document.getElementById('inWeight').value) || (c.bca.length > 0 ? c.bca[0].w : 0);
         const bmr = parseFloat(document.getElementById('inBmr').value) || 0; const act = parseFloat(document.getElementById('inActivity').value) || 1.2;
         const visFat = parseFloat(document.getElementById('inVisFat').value) || 0;
-        
-        let goal = pbf > 22 ? "Fat Loss (Deficit)" : "Hypertrophy (Surplus/Maint)";
-        if(pbf === 0) goal = "General Fitness";
-
+        let goal = pbf > 22 ? "Fat Loss (Deficit)" : "Hypertrophy (Surplus/Maint)"; if(pbf === 0) goal = "General Fitness";
         let nutText = "";
         if(bmr > 0 && w > 0) {
             let tdee = Math.round(bmr * act);
             let targetCal = pbf > 22 ? tdee - 500 : tdee + 300; 
-            let pro = Math.round(w * 2.2); 
-            let fat = Math.round(w * 0.9); 
-            let carb = Math.round((targetCal - (pro*4 + fat*9)) / 4);
+            let pro = Math.round(w * 2.2); let fat = Math.round(w * 0.9); let carb = Math.round((targetCal - (pro*4 + fat*9)) / 4);
             if (carb < 0) carb = 50; 
-            
             c.tdee = targetCal; c.macros = { p: pro, c: carb, f: fat }; localStorage.setItem('ryal_pro_v9', JSON.stringify(clients)); 
-            
-            nutText = `<div style="background:#fff; border:1px solid var(--info); padding:10px; border-radius:10px; margin-top:10px;">
-                <div style="font-size:11px; color:var(--info); font-weight:800; margin-bottom:5px;"><i data-feather="target" class="icon"></i> NUTRITION PRESCRIPTION</div>
-                <div style="display:flex; justify-content:space-between; text-align:center; margin-top:8px;">
-                    <div><div style="font-size:9px; color:#888;">TDEE</div><div style="font-weight:800; font-size:13px;">${tdee}</div></div>
-                    <div><div style="font-size:9px; color:#888;">TARGET</div><div style="font-weight:800; font-size:14px; color:var(--info);">${targetCal}</div></div>
-                    <div><div style="font-size:9px; color:#888;">PRO</div><div style="font-weight:800; font-size:13px;">${pro}g</div></div>
-                    <div><div style="font-size:9px; color:#888;">FAT</div><div style="font-weight:800; font-size:13px;">${fat}g</div></div>
-                    <div><div style="font-size:9px; color:#888;">CARB</div><div style="font-weight:800; font-size:13px;">${carb}g</div></div>
-                </div>
-            </div>`;
+            nutText = `<div style="background:#fff; border:1px solid var(--info); padding:10px; border-radius:10px; margin-top:10px;"><div style="font-size:11px; color:var(--info); font-weight:800; margin-bottom:5px;"><i data-feather="target" class="icon"></i> NUTRITION PRESCRIPTION</div><div style="display:flex; justify-content:space-between; text-align:center; margin-top:8px;"><div><div style="font-size:9px; color:#888;">TDEE</div><div style="font-weight:800; font-size:13px;">${tdee}</div></div><div><div style="font-size:9px; color:#888;">TARGET</div><div style="font-weight:800; font-size:14px; color:var(--info);">${targetCal}</div></div><div><div style="font-size:9px; color:#888;">PRO</div><div style="font-weight:800; font-size:13px;">${pro}g</div></div><div><div style="font-size:9px; color:#888;">FAT</div><div style="font-weight:800; font-size:13px;">${fat}g</div></div><div><div style="font-size:9px; color:#888;">CARB</div><div style="font-weight:800; font-size:13px;">${carb}g</div></div></div></div>`;
         }
-
-        let scout = `<div class="plan-box"><div style="font-weight:800; font-size:14px; 
-border-bottom:1px solid #d2d2d7; padding-bottom:5px;">AI Blueprint</div><div style="font-size:12px; margin-top:8px;"><b>Focus:</b> ${goal}</div>${visFat>=10?`<div style="color:var(--danger); font-size:11px; margin-top:5px; font-weight:700;">⚠️ High Visceral Fat. Strict Zone 2 Cardio required.</div>`:''}${nutText}</div>`;
+        let scout = `<div class="plan-box"><div style="font-weight:800; font-size:14px; border-bottom:1px solid #d2d2d7; padding-bottom:5px;">AI Blueprint</div><div style="font-size:12px; margin-top:8px;"><b>Focus:</b> ${goal}</div>${visFat>=10?`<div style="color:var(--danger); font-size:11px; margin-top:5px; font-weight:700;">⚠️ High Visceral Fat. Strict Zone 2 Cardio required.</div>`:''}${nutText}</div>`;
         document.getElementById('ovScout').innerHTML = scout; document.getElementById('scoutEngine').style.display = "block"; feather.replace();
     }
 
@@ -1049,21 +819,17 @@ border-bottom:1px solid #d2d2d7; padding-bottom:5px;">AI Blueprint</div><div sty
     function selSplitEx(name, el) {
         document.querySelectorAll('.ex-tag').forEach(e => e.classList.remove('active')); el.classList.add('active');
         curExName = name; document.getElementById('curEx').innerText = name;
-        
-        const c = clients.find(x => x.id === curID);
-        lastPerfData = null;
+        const c = clients.find(x => x.id === curID); lastPerfData = null;
         let dates = Object.keys(c.logs).sort().reverse();
         for(let d of dates) {
             let found = c.logs[d].find(l => l.name === name);
             if(found && found.sets && found.sets.length > 0) { lastPerfData = found.sets[0]; break; }
         }
-        
         const recUI = document.getElementById('historyRecall');
         if(lastPerfData && lastPerfData.w && lastPerfData.r) {
             document.getElementById('historyRecallText').innerText = `Last: ${lastPerfData.w}kg × ${lastPerfData.r} (RPE ${lastPerfData.rpe||'-'})`;
             recUI.style.display = 'flex';
         } else { recUI.style.display = 'none'; }
-
         generateSetInputs(); document.getElementById('setForm').style.display='block'; 
     }
 
@@ -1073,20 +839,16 @@ border-bottom:1px solid #d2d2d7; padding-bottom:5px;">AI Blueprint</div><div sty
         let newW = baseW; let newR = baseR;
         if(type === 'wt') newW = Math.round((baseW * 1.025) * 10) / 10; 
         if(type === 'rep') newR = baseR + 1;
-        
         const count = parseInt(document.getElementById('numSets').value) || 1;
         for(let i=1; i<=count; i++) {
             let elW = document.getElementById(`inW_${i}`); let elR = document.getElementById(`inR_${i}`);
-            if(elW && !elW.value) elW.value = newW;
-            if(elR && !elR.value) elR.value = newR;
+            if(elW && !elW.value) elW.value = newW; if(elR && !elR.value) elR.value = newR;
         }
     }
 
     function generateSetInputs() {
         let count = parseInt(document.getElementById('numSets').value) || 1; let html = '';
-        for(let i=1; i<=count; i++) {
-            html += `<div class="set-row"><span class="set-label">Set ${i}</span><input type="number" step="0.5" id="inW_${i}" class="set-input" placeholder="kg"><input type="number" id="inR_${i}" class="set-input" placeholder="Reps"><input type="number" id="inRpe_${i}" class="set-input" placeholder="RPE 1-10" style="max-width:70px;"></div>`;
-        }
+        for(let i=1; i<=count; i++) { html += `<div class="set-row"><span class="set-label">Set ${i}</span><input type="number" step="0.5" id="inW_${i}" class="set-input" placeholder="kg"><input type="number" id="inR_${i}" class="set-input" placeholder="Reps"><input type="number" id="inRpe_${i}" class="set-input" placeholder="RPE 1-10" style="max-width:70px;"></div>`; }
         document.getElementById('setInputsContainer').innerHTML = html;
     }
 
@@ -1106,65 +868,24 @@ border-bottom:1px solid #d2d2d7; padding-bottom:5px;">AI Blueprint</div><div sty
     function renderTonnageChart() {
         const c = clients.find(x => x.id === curID);
         if(tonnageChartInst) tonnageChartInst.destroy();
-        
         let tonnageMap = {};
         Object.keys(c.logs).sort().forEach(date => {
             let dayTotal = 0;
-            c.logs[date].forEach(ex => {
-                if(ex.sets) ex.sets.forEach(s => { dayTotal += (parseFloat(s.w)||0) * (parseInt(s.r)||0); });
-            });
+            c.logs[date].forEach(ex => { if(ex.sets) ex.sets.forEach(s => { dayTotal += (parseFloat(s.w)||0) * (parseInt(s.r)||0); }); });
             if(dayTotal > 0) tonnageMap[date] = dayTotal;
         });
-
-        const dates = Object.keys(tonnageMap).slice(-10); 
-        const vols = dates.map(d => tonnageMap[d]);
-
+        const dates = Object.keys(tonnageMap).slice(-10); const vols = dates.map(d => tonnageMap[d]);
         const ctx = document.getElementById('tonnageChart').getContext('2d');
-        tonnageChartInst = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: dates, datasets: [{ label: 'Tonnage (kg lifted)', data: vols, backgroundColor: '#007aff', borderRadius: 4 }] },
-            options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { display: false } } }
-        });
+        tonnageChartInst = new Chart(ctx, { type: 'bar', data: { labels: dates, datasets: [{ label: 'Tonnage (kg lifted)', data: vols, backgroundColor: '#007aff', borderRadius: 4 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { display: false } } } });
     }
 
     function render() {
         // LEADS / TRIALS
         let leadHtml = leads.map(l => {
-            let trialList = l.trials ? l.trials.map((t, i) => `
-                <div style="font-size:11px; margin-top:5px; background:#f5f5f7; padding:8px; border-radius:6px; border:1px solid var(--border);">
-                    <div style="font-weight:700; color:var(--info); margin-bottom:3px;">Trial ${i+1} <span style="color:#86868b; font-weight:500;">(${t.date})</span></div>
-                    <div style="margin-bottom:2px;"><b>Activity:</b> ${t.activity}</div>
-                    <div><b>Remark:</b> ${t.remark}</div>
-                </div>
-            `).join('') : '';
-
-            let nextTrialForm = (!l.trials || l.trials.length < 3) ? `
-                <div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);">
-                    <div style="font-size:10px; font-weight:700; color:#86868b; margin-bottom:5px;">LOG TRIAL ${l.trials ? l.trials.length + 1 : 1}</div>
-                    <input type="date" id="trialDate_${l.id}" value="${today}" style="padding:6px; font-size:11px; margin-bottom:5px;">
-                    <input type="text" id="trialAct_${l.id}" placeholder="What we did (e.g. Assessment)" style="padding:6px; font-size:11px; margin-bottom:5px;">
-                    <input type="text" id="trialRem_${l.id}" placeholder="Remark (e.g. Needs push)" style="padding:6px; font-size:11px; margin-bottom:5px;">
-                    <button class="btn-sub" style="padding:6px; font-size:11px; width:100%; border-color:var(--info); color:var(--info);" onclick="logTrial(${l.id})">Save Trial</button>
-                </div>
-            ` : `<div style="margin-top:10px; font-size:11px; color:var(--warning); font-weight:700;"><i data-feather="alert-circle" class="icon"></i> 3 Trials Completed. Convert or Drop.</div>`;
-
+            let trialList = l.trials ? l.trials.map((t, i) => `<div style="font-size:11px; margin-top:5px; background:#f5f5f7; padding:8px; border-radius:6px; border:1px solid var(--border);"><div style="font-weight:700; color:var(--info); margin-bottom:3px;">Trial ${i+1} <span style="color:#86868b; font-weight:500;">(${t.date})</span></div><div style="margin-bottom:2px;"><b>Activity:</b> ${t.activity}</div><div><b>Remark:</b> ${t.remark}</div></div>`).join('') : '';
+            let nextTrialForm = (!l.trials || l.trials.length < 3) ? `<div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);"><div style="font-size:10px; font-weight:700; color:#86868b; margin-bottom:5px;">LOG TRIAL ${l.trials ? l.trials.length + 1 : 1}</div><input type="date" id="trialDate_${l.id}" value="${today}" style="padding:6px; font-size:11px; margin-bottom:5px;"><input type="text" id="trialAct_${l.id}" placeholder="What we did (e.g. Assessment)" style="padding:6px; font-size:11px; margin-bottom:5px;"><input type="text" id="trialRem_${l.id}" placeholder="Remark (e.g. Needs push)" style="padding:6px; font-size:11px; margin-bottom:5px;"><button class="btn-sub" style="padding:6px; font-size:11px; width:100%; border-color:var(--info); color:var(--info);" onclick="logTrial(${l.id})">Save Trial</button></div>` : `<div style="margin-top:10px; font-size:11px; color:var(--warning); font-weight:700;"><i data-feather="alert-circle" class="icon"></i> 3 Trials Completed. Convert or Drop.</div>`;
             let currentStage = l.trials && l.trials.length > 0 ? `<span class="badge info">TRIAL ${l.trials.length}</span>` : `<span class="badge neutral">NEW</span>`;
-
-            return `
-            <div class="history-row" style="flex-direction:column; align-items:flex-start; background:#fff; padding:12px; border-radius:10px; border:1px solid var(--border); margin-bottom:10px;">
-                <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                    <div><b style="color:#1d1d1f; font-size:14px;">${l.name}</b> ${currentStage}<br><span style="font-size:11px; color:#86868b;"><i data-feather="phone" class="icon"></i> ${l.contact || 'No Contact'}</span></div>
-                    <button class="btn-action" style="border:none; color:#86868b;" onclick="toggleGroup('lead-${l.id}', this)"><i data-feather="chevron-down" class="icon-lg" style="margin:0;"></i></button>
-                </div>
-                <div id="lead-${l.id}" style="display:none; width:100%; margin-top:10px; flex-direction:column;">
-                    ${trialList}
-                    ${nextTrialForm}
-                    <div style="display:flex; gap:10px; margin-top:12px;">
-                        <button class="btn-main" style="flex:1; padding:8px; font-size:11px;" onclick="convertLead(${l.id})">Convert to Client</button>
-                        <button class="btn-action danger" style="padding:8px; font-size:11px;" onclick="delLead(${l.id})"><i data-feather="trash-2" class="icon" style="margin:0;"></i></button>
-                    </div>
-                </div>
-            </div>`;
+            return `<div class="history-row" style="flex-direction:column; align-items:flex-start; background:#fff; padding:12px; border-radius:10px; border:1px solid var(--border); margin-bottom:10px;"><div style="display:flex; justify-content:space-between; width:100%; align-items:center;"><div><b style="color:#1d1d1f; font-size:14px;">${l.name}</b> ${currentStage}<br><span style="font-size:11px; color:#86868b;"><i data-feather="phone" class="icon"></i> ${l.contact || 'No Contact'}</span></div><button class="btn-action" style="border:none; color:#86868b;" onclick="toggleGroup('lead-${l.id}', this)"><i data-feather="chevron-down" class="icon-lg" style="margin:0;"></i></button></div><div id="lead-${l.id}" style="display:none; width:100%; margin-top:10px; flex-direction:column;">${trialList}${nextTrialForm}<div style="display:flex; gap:10px; margin-top:12px;"><button class="btn-main" style="flex:1; padding:8px; font-size:11px;" onclick="convertLead(${l.id})">Convert to Client</button><button class="btn-action danger" style="padding:8px; font-size:11px;" onclick="delLead(${l.id})"><i data-feather="trash-2" class="icon" style="margin:0;"></i></button></div></div></div>`;
         }).join('');
         document.getElementById('leadsList').innerHTML = leadHtml || "<span style='font-size:12px; color:#888;'>No active trials.</span>";
 
@@ -1179,7 +900,6 @@ border-bottom:1px solid #d2d2d7; padding-bottom:5px;">AI Blueprint</div><div sty
             let done = Object.keys(c.logs).length; let daysLeft = c.endDate ? Math.ceil((new Date(c.endDate) - new Date(today)) / 86400000) : 999;
             let isExp = (c.sess - done <= 0 || daysLeft < 0); let isWarn = (c.sess - done <= 2 || daysLeft <= 3);
             let badge = isExp ? '<span class="badge danger">Expired</span>' : (isWarn ? '<span class="badge warning">Expiring</span>' : '');
-
             let histRows = "";
             Object.keys(c.logs).sort().reverse().forEach(date => {
                 let safeDate = date.replace(/[^0-9]/g, '');
@@ -1190,86 +910,50 @@ border-bottom:1px solid #d2d2d7; padding-bottom:5px;">AI Blueprint</div><div sty
                 });
                 histRows += `</div>`;
             });
-
             rosterHtml += `<tr style="${isExp?'background:#ffe5e5;':(isWarn?'background:#fff5e5;':'')}"><td><span class="client-link" onclick="openOv(${c.id})">${c.name}</span>${badge}</td><td><b style="color:#555; font-size:11px;">${formatTime(c.slot)||'-'}</b></td><td><b>${done}</b> / ${c.sess}</td><td style="text-align:right;"><button class="btn-action" onclick="toggleHistory(${c.id})">Logs</button></td></tr><tr id="hist-${c.id}" style="display:none;"><td colspan="4"><div class="history-pane">${histRows||'No logs.'}</div></td></tr>`;
         });
         document.getElementById('rosterView').innerHTML = rosterHtml;
 
-        // REVENUE
-        let mData = {}; let cRev = 0;
-        
-        shifts.forEach(s => { 
-            let m=s.date.slice(0,7); 
-            if(!mData[m]) mData[m]={sal:0,pt:0,pen:0, daily:{}}; 
-            mData[m].sal += s.pay||0; 
-            
-            if(!mData[m].daily[s.date]) mData[m].daily[s.date] = {sal:0,pt:0,pen:0};
-            mData[m].daily[s.date].sal += s.pay||0;
+        // REVENUE LOGIC
+        let mData = {}; 
+        let todayRev = 0; // NEW: Reset today's revenue specifically
 
-            if(s.isLate||s.isHalfDay) {
-                let p = ((10000/30)*0.5);
-                mData[m].pen += p; 
-                mData[m].daily[s.date].pen += p;
-            }
+        shifts.forEach(s => { 
+            let m=s.date.slice(0,7); if(!mData[m]) mData[m]={sal:0,pt:0,pen:0, daily:{}}; mData[m].sal += s.pay||0; 
+            if(!mData[m].daily[s.date]) mData[m].daily[s.date] = {sal:0,pt:0,pen:0}; mData[m].daily[s.date].sal += s.pay||0;
+            if(s.isLate||s.isHalfDay) { let p = ((10000/30)*0.5); mData[m].pen += p; mData[m].daily[s.date].pen += p; }
+            if(s.date === today) todayRev += s.pay||0; // Track today's base pay
         });
         
         clients.forEach(c => { 
             let pt = ((c.pay||0)/(1+(c.gst||0))*(c.ret||0))/(c.sess||1); 
             Object.keys(c.logs).forEach(d => { 
                 if(c.logs[d].length>0) { 
-                    let m=d.slice(0,7); 
-                    if(!mData[m]) mData[m]={sal:0,pt:0,pen:0, daily:{}}; 
-                    mData[m].pt += pt; 
-
-                    if(!mData[m].daily[d]) mData[m].daily[d] = {sal:0,pt:0,pen:0};
-                    mData[m].daily[d].pt += pt;
+                    let m=d.slice(0,7); if(!mData[m]) mData[m]={sal:0,pt:0,pen:0, daily:{}}; mData[m].pt += pt; 
+                    if(!mData[m].daily[d]) mData[m].daily[d] = {sal:0,pt:0,pen:0}; mData[m].daily[d].pt += pt;
+                    if(d === today) todayRev += pt; // Track today's PT revenue
                 }
             }); 
         });
         
         let revHtml = Object.keys(mData).sort().reverse().map(m => {
-            let net = mData[m].sal + mData[m].pt - mData[m].pen; if(m === today.slice(0,7)) cRev = net;
-            
-            let dailyHtml = "";
-            let sortedDays = Object.keys(mData[m].daily).sort().reverse();
+            let net = mData[m].sal + mData[m].pt - mData[m].pen;
+            let dailyHtml = ""; let sortedDays = Object.keys(mData[m].daily).sort().reverse();
             if(sortedDays.length > 0) {
-                dailyHtml = `<div style="margin-top:10px; border-top:1px dashed #e5e5ea; padding-top:10px;">
-                    <div style="font-size:10px; font-weight:700; color:#86868b; margin-bottom:5px; text-transform:uppercase;">Daily Breakdown</div>`;
-                sortedDays.forEach(d => {
-                    let dayData = mData[m].daily[d];
-                    let dayNet = dayData.sal + dayData.pt - dayData.pen;
-                    dailyHtml += `<div style="display:flex; justify-content:space-between; font-size:11px; padding:6px 0; border-bottom:1px solid #f5f5f7;">
-                        <span><i class="fa-regular fa-calendar" style="color:#86868b; margin-right:4px;"></i> ${d}</span>
-                        <span style="font-weight:600; color:${dayNet < 0 ? 'var(--danger)' : '#1d1d1f'};">₹${dayNet.toFixed(0)}</span>
-                    </div>`;
-                });
+                dailyHtml = `<div style="margin-top:10px; border-top:1px dashed #e5e5ea; padding-top:10px;"><div style="font-size:10px; font-weight:700; color:#86868b; margin-bottom:5px; text-transform:uppercase;">Daily Breakdown</div>`;
+                sortedDays.forEach(d => { let dayData = mData[m].daily[d]; let dayNet = dayData.sal + dayData.pt - dayData.pen; dailyHtml += `<div style="display:flex; justify-content:space-between; font-size:11px; padding:6px 0; border-bottom:1px solid #f5f5f7;"><span><i class="fa-regular fa-calendar" style="color:#86868b; margin-right:4px;"></i> ${d}</span><span style="font-weight:600; color:${dayNet < 0 ? 'var(--danger)' : '#1d1d1f'};">₹${dayNet.toFixed(0)}</span></div>`; });
                 dailyHtml += `</div>`;
             }
-
-            return `<div style="background:#fff; border:1px solid var(--border); border-radius:10px; margin-bottom:10px; padding:0 12px;">
-                <div class="rev-month" onclick="toggleGroup('rev-split-${m}', this)" style="cursor:pointer; border-bottom:none; margin-top:0; padding:12px 0;">
-                    <span style="display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-calendar-days" style="color:#86868b;"></i> ${m}</span>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="color:var(--primary); font-size:16px;">₹${net.toFixed(0)}</span>
-                        <i class="fa-solid fa-chevron-down" style="color:#86868b; font-size:12px; transition:0.3s;"></i>
-                    </div>
-                </div>
-                <div id="rev-split-${m}" class="rev-split" style="display:none; padding-bottom:12px; border-top:1px solid #e5e5ea; margin-top:0; padding-top:12px; flex-direction:column;">
-                    <div style="display:flex; gap:15px; flex-wrap:wrap;">
-                        <span><i class="fa-solid fa-building-columns" style="color:#86868b; margin-right:3px;"></i> SAL: <b style="color:#1d1d1f;">₹${mData[m].sal.toFixed(0)}</b></span>
-                        <span><i class="fa-solid fa-handshake-angle" style="color:#86868b; margin-right:3px;"></i> PT: <b style="color:#1d1d1f;">₹${mData[m].pt.toFixed(0)}</b></span>
-                        <span style="color:var(--danger)"><i class="fa-solid fa-circle-exclamation" style="margin-right:3px;"></i> PEN: <b>-₹${mData[m].pen.toFixed(0)}</b></span>
-                    </div>
-                    ${dailyHtml}
-                </div>
-            </div>`;
+            return `<div style="background:#fff; border:1px solid var(--border); border-radius:10px; margin-bottom:10px; padding:0 12px;"><div class="rev-month" onclick="toggleGroup('rev-split-${m}', this)" style="cursor:pointer; border-bottom:none; margin-top:0; padding:12px 0;"><span style="display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-calendar-days" style="color:#86868b;"></i> ${m}</span><div style="display:flex; align-items:center; gap:8px;"><span style="color:var(--primary); font-size:16px;">₹${net.toFixed(0)}</span><i class="fa-solid fa-chevron-down" style="color:#86868b; font-size:12px; transition:0.3s;"></i></div></div><div id="rev-split-${m}" class="rev-split" style="display:none; padding-bottom:12px; border-top:1px solid #e5e5ea; margin-top:0; padding-top:12px; flex-direction:column;"><div style="display:flex; gap:15px; flex-wrap:wrap;"><span><i class="fa-solid fa-building-columns" style="color:#86868b; margin-right:3px;"></i> SAL: <b style="color:#1d1d1f;">₹${mData[m].sal.toFixed(0)}</b></span><span><i class="fa-solid fa-handshake-angle" style="color:#86868b; margin-right:3px;"></i> PT: <b style="color:#1d1d1f;">₹${mData[m].pt.toFixed(0)}</b></span><span style="color:var(--danger)"><i class="fa-solid fa-circle-exclamation" style="margin-right:3px;"></i> PEN: <b>-₹${mData[m].pen.toFixed(0)}</b></span></div>${dailyHtml}</div></div>`;
         }).join('');
         
         document.getElementById('revView').innerHTML = revHtml || "<span style='font-size:12px; color:#888;'>No data.</span>";
-        document.getElementById('statRevenue').innerText = `₹${cRev.toFixed(0)}`;
+        
+        // statRevenue only shows Today's earnings now
+        document.getElementById('statRevenue').innerText = `₹${todayRev.toFixed(0)}`;
+        
         document.getElementById('statSessions').innerText = clients.reduce((count, c) => count + (c.logs[today] && c.logs[today].length > 0 ? 1 : 0), 0);
         document.getElementById('statShift').innerText = shifts.find(x => x.date === today)?.status || "-";
-        
         feather.replace();
     }
 </script>
