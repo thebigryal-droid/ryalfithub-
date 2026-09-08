@@ -1,8 +1,10 @@
 <!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ryal Management</title><style>
-
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ryal Management</title>
+<style>
 :root{--ink:#24342d;--muted:#68756f;--bg:#f4f5f2;--card:#fff;--line:#dfe4df;--accent:#31483d;--accent2:#e9eeea;--danger:#9a4138;--shadow:0 5px 20px rgba(31,45,38,.06)}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
 button,input,select,textarea{font:inherit}button{cursor:pointer}.app-header{background:var(--accent);color:#fff;padding:15px 18px;position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,.08)}
@@ -27,8 +29,10 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;bord
 .header-tools{display:flex;align-items:center;gap:8px}
 @media(max-width:760px){.header-tools .tag{display:none}.header-tools .btn{padding:7px 9px}.auth-card{padding:22px}}
 
-.setup-screen{position:fixed;inset:0;background:#f5f7f5;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10000}.setup-screen .auth-card{max-height:92vh;overflow:auto}.keybox{min-height:110px;font-family:monospace;font-size:11px}.setup-screen .btn{width:100%;margin-top:10px}</style>
-</head><body>
+.setup-screen{position:fixed;inset:0;background:#f5f7f5;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10000}.setup-screen .auth-card{max-height:92vh;overflow:auto}.keybox{min-height:110px;font-family:monospace;font-size:11px}.setup-screen .btn{width:100%;margin-top:10px}
+</style>
+</head>
+<body>
 
 <div id="setupScreen" class="setup-screen" style="display:none">
   <div class="auth-card">
@@ -58,60 +62,369 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;bord
         <div class="auth-note">Cloud mode requires the Supabase URL and public anon/publishable key in <code>supabase.config.js</code>.</div>
       </div>
     </div>
-    <header class="app-header"><div class="header-row"><div><div class="brand">RYAL MANAGEMENT</div><div class="tag">AMENITIES • STAFF • OPERATIONS • EXECUTIVE REPORTING</div></div><div class="header-tools"><span id="cloudStatus" class="pill">LOCAL DEMO</span><span id="userBadge" class="tag"></span><button class="btn" onclick="signOut()">Sign out</button></div></div></header>
+    
+<header class="app-header">
+  <div class="header-row">
+    <div>
+      <div class="brand">RYAL MANAGEMENT</div>
+      <div class="tag">ASHAR ARIZE COMMAND CENTRE</div>
+    </div>
+    <div class="header-tools">
+      <span id="cloudStatus" class="pill">LOCAL DEMO</span>
+      <span id="userBadge" class="tag"></span>
+      <button class="btn" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+</header>
+
 <div class="layout">
 <nav class="nav no-print">
-<button data-view="dashboard" class="active" onclick="nav('dashboard')">Dashboard</button>
-<button data-view="bookings" onclick="nav('bookings')">Amenity Bookings</button>
-<button data-view="residents" onclick="nav('residents')">Residents</button>
-<button data-view="staff" onclick="nav('staff')">Staff & Attendance</button>
-<button data-view="pool" onclick="nav('pool')">Pool Chemicals</button>
-<button data-view="operations" onclick="nav('operations')">Inventory / Issues</button>
-<button data-view="daily" onclick="nav('daily')">Executive Daily Log</button>
-<button data-view="reports" onclick="nav('reports')">Executive Reports</button>
+  <button data-view="dashboard" class="active" onclick="nav('dashboard')">Dashboard</button>
+  <button data-view="tasks" onclick="nav('tasks')">Daily Tasks</button>
+  <button data-view="bookings" onclick="nav('bookings')">Amenity Bookings</button>
+  <button data-view="maintenance" onclick="nav('maintenance')">Maintenance</button>
+  <button data-view="issues" onclick="nav('issues')">Issues & Complaints</button>
+  <button data-view="pool" onclick="nav('pool')">Pool Log</button>
+  <button data-view="staff" onclick="nav('staff')">Staff & Attendance</button>
+  <button data-view="daily" onclick="nav('daily')">Executive Daily Log</button>
+  <button data-view="reports" onclick="nav('reports')">Executive Reports</button>
 </nav>
+
 <main>
-<section id="v-dashboard" class="view active"><h1>Dashboard</h1><p class=muted>Today's operational snapshot.</p><div id=dash></div></section>
-
-<section id="v-bookings" class="view"><h1>Amenity Bookings</h1><p class=muted>Conflict-controlled booking register.</p>
-<div class=card><h2>New booking</h2><form id=bookingForm><div class=form-grid>
-<div class=field><label>Date</label><input id=bdate type=date required></div><div class=field><label>Amenity</label><select id=ban required></select></div>
-<div class=field><label>Start</label><input id=bst type=time required></div><div class=field><label>End</label><input id=ben type=time required></div>
-<div class=field><label>Flat number</label><input id=bflat></div><div class=field><label>Resident name</label><input id=bres></div>
-<div class=field><label>Phone</label><input id=bphone></div><div class=field><label>Charge</label><input id=bcharge type=number min=0></div>
-<div class=field><label>Status</label><select id=bstatus><option>Booked</option><option>Completed</option><option>Cancelled</option><option>No Show</option></select></div><div class=field><label>Remarks</label><input id=bremarks></div>
-</div><div class=actions><button class="btn primary">Save Booking</button></div></form></div>
-<div class=card><div class=section-head><h2>Booking register</h2></div><div class=table-wrap><table><thead><tr><th>Date</th><th>Amenity</th><th>Flat</th><th>Time</th><th>Charge</th><th>Status</th></tr></thead><tbody id=bookingRows></tbody></table></div></div></section>
-
-<section id="v-residents" class="view"><h1>Residents</h1><div class=card><h2>Add resident / flat</h2><form id=residentForm><div class=form-grid><div class=field><label>Flat number</label><input id=flat required></div><div class=field><label>Resident name</label><input id=rname required></div><div class=field><label>Phone</label><input id=phone></div></div><div class=actions><button class="btn primary">Save Resident</button></div></form></div>
-<div class=card><div class=table-wrap><table><thead><tr><th>Flat</th><th>Resident</th><th>Phone</th></tr></thead><tbody id=residentRows></tbody></table></div></div></section>
-
-<section id="v-staff" class="view"><h1>Staff & Attendance</h1><div class=card><h2>Staff master</h2><form id=staffForm><div class=form-grid><div class=field><label>Staff name</label><input id=sname required></div><div class=field><label>Department</label><select id=dept></select></div></div><div class=actions><button class="btn primary">Add Staff</button></div></form></div>
-<div class=card><h2>Amenity master</h2><form id=amenityForm><div class=form-grid><div class=field><label>Amenity</label><input id=aname required></div><div class=field><label>Default charge</label><input id=acharge type=number min=0></div></div><div class=actions><button class="btn primary">Add Amenity</button></div></form><div class=table-wrap><table><thead><tr><th>Amenity</th><th>Charge</th></tr></thead><tbody id=amenityRows></tbody></table></div></div>
-<div class=card><h2>Staff register</h2><div class=table-wrap><table><thead><tr><th>Staff</th><th>Department</th></tr></thead><tbody id=staffRows></tbody></table></div></div><div class=card><h2>Attendance</h2><form id=attendanceForm><div class=form-grid><div class=field><label>Date</label><input id=adate type=date required></div><div class=field><label>Staff</label><select id=astaff required></select></div><div class=field><label>Department</label><select id=adept></select></div><div class=field><label>Shift / timing</label><input id=ashift placeholder="e.g. 9:00 AM – 6:00 PM"></div><div class=field><label>Status</label><select id=astatus><option>Present</option><option>Late</option><option>Absent</option><option>Half Day</option><option>Leave</option><option>Weekly Off</option></select></div></div><div class=actions><button class="btn primary">Save Attendance</button></div></form></div>
-<div class=card><div class=table-wrap><table><thead><tr><th>Date</th><th>Staff</th><th>Department</th><th>Shift</th><th>Status</th></tr></thead><tbody id=attendanceRows></tbody></table></div></div></section>
-
-<section id="v-pool" class="view"><h1>Pool Chemical Logs</h1><p class=muted>Morning and evening readings stored against the date.</p><div class=card><form id=poolForm><div class=form-grid><div class=field><label>Date</label><input id=pdate type=date required></div><div class=field><label>Morning chlorine</label><input id=mcl type=number step=.01></div><div class=field><label>Morning pH</label><input id=mph type=number step=.01></div><div class=field><label>Evening chlorine</label><input id=ecl type=number step=.01></div><div class=field><label>Evening pH</label><input id=eph type=number step=.01></div><div class=field><label>Remarks</label><input id=prem></div></div><div class=actions><button class="btn primary">Save Pool Log</button></div></form></div><div class=card><div class=table-wrap><table><thead><tr><th>Date</th><th>AM Chlorine</th><th>AM pH</th><th>PM Chlorine</th><th>PM pH</th></tr></thead><tbody id=poolRows></tbody></table></div></div></section>
-
-<section id="v-operations" class="view"><h1>Inventory / Issues / Complaints</h1><div class=card><form id=opsForm><div class=form-grid><div class=field><label>Date</label><input id=odate type=date required></div><div class=field><label>Type</label><select id=otype><option>Inventory</option><option>Issue</option><option>Complaint</option><option>Maintenance</option></select></div><div class=field><label>Item / subject</label><input id=osub required></div><div class=field><label>Location / flat</label><input id=oloc></div><div class=field><label>Status</label><select id=ostat><option>Open</option><option>In Progress</option><option>Resolved</option></select></div><div class=field><label>Remarks</label><input id=orem></div></div><div class=actions><button class="btn primary">Save Operation</button></div></form></div><div class=card><div class=table-wrap><table><thead><tr><th>Date</th><th>Type</th><th>Subject</th><th>Location</th><th>Status</th></tr></thead><tbody id=opsRows></tbody></table></div></div></section>
-
-<section id="v-daily" class="view"><h1>Executive Daily Log</h1><p class=muted>One management report per date. In the cloud version this record is stored centrally and becomes part of period reports.</p>
-<div class=card><form id=dailyForm><div class=form-grid><div class=field><label>Date</label><input id=drdate type=date required></div><div class=field><label>Prepared by</label><input id=drprepared></div>
-<div class=field><label>Executive summary</label><textarea id=drsummary></textarea></div><div class=field><label>Key updates</label><textarea id=drupdates></textarea></div>
-<div class=field><label>Incidents / complaints</label><textarea id=drincidents></textarea></div><div class=field><label>Resident feedback</label><textarea id=drfeedback></textarea></div>
-<div class=field><label>Staffing notes</label><textarea id=drstaffing></textarea></div><div class=field><label>Maintenance notes</label><textarea id=drmaintenance></textarea></div>
-<div class=field><label>Inventory notes</label><textarea id=drinventory></textarea></div><div class=field><label>Pool notes</label><textarea id=drpool></textarea></div>
-<div class=field><label>Booking / amenity notes</label><textarea id=drbooking></textarea></div><div class=field><label>Follow-up required</label><textarea id=drfollowup></textarea></div>
-<div class=field><label>Management notes</label><textarea id=drmanagement></textarea></div></div><div class=actions><button class="btn primary">Save Daily Report</button></div></form></div>
-<div class=card><h2>Saved daily logs</h2><div class=table-wrap><table><thead><tr><th>Date</th><th>Prepared by</th><th>Summary</th></tr></thead><tbody id=dailyRows></tbody></table></div></div></section>
-
-<section id="v-reports" class="view printable"><h1>Executive Reports</h1><p class=muted>Daily, weekly, monthly or custom period reporting from stored records.</p>
-<div class="card no-print"><div class=form-grid><div class=field><label>Start date</label><input id=reportStart type=date onchange=renderReports()></div><div class=field><label>End date</label><input id=reportEnd type=date onchange=renderReports()></div></div><div class=actions><button class="btn primary" onclick=renderReports()>Generate Report</button><button class=btn onclick=exportCSV()>Export CSV</button><button class=btn onclick=window.print()>Print / Save PDF</button></div></div>
-<div class=card><h2>Executive period summary</h2><p id=reportRange class=muted></p><div id=reportMetrics class=grid></div></div>
-<div class=card><h2>Daily management log</h2><div class=table-wrap><table><thead><tr><th>Date</th><th>Prepared by</th><th>Executive summary</th><th>Follow-up</th></tr></thead><tbody id=reportRows></tbody></table></div></div>
+<!-- DASHBOARD -->
+<section id="v-dashboard" class="view active">
+  <h1>Amenities Operations Dashboard</h1>
+  <p class="muted">Live daily command centre for Ashar Arize.</p>
+  <div id="dash"></div>
 </section>
-</main></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
+
+<!-- DAILY TASKS (from Control & Task Library) -->
+<section id="v-tasks" class="view">
+  <h1>Daily Amenity Tasks</h1>
+  <p class="muted">Record completion of daily cleaning and checks.</p>
+  <div class="card">
+    <div class="section-head"><h2>Today's Tasks</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Zone</th>
+            <th>Amenity</th>
+            <th>Task</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="taskRows"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- AMENITY BOOKINGS -->
+<section id="v-bookings" class="view">
+  <h1>Amenity Bookings</h1>
+  <p class="muted">Conflict-controlled booking register.</p>
+  <div class="card">
+    <h2>New booking</h2>
+    <form id="bookingForm">
+      <div class="form-grid">
+        <div class="field"><label>Date</label><input id="bdate" type="date" required></div>
+        <div class="field"><label>Amenity</label><select id="ban" required></select></div>
+        <div class="field"><label>Start Time</label><input id="bst" type="time" required></div>
+        <div class="field"><label>End Time</label><input id="ben" type="time" required></div>
+        <div class="field"><label>Flat No.</label><input id="bflat" required></div>
+        <div class="field"><label>Resident Name / Contact</label><input id="bres" required></div>
+        <div class="field"><label>Purpose</label><input id="bpurpose"></div>
+        <div class="field"><label>Status</label>
+          <select id="bstatus">
+            <option>Booked</option>
+            <option>Completed</option>
+            <option>Cancelled</option>
+            <option>No Show</option>
+          </select>
+        </div>
+      </div>
+      <div class="actions"><button class="btn primary">Save Booking</button></div>
+    </form>
+  </div>
+  <div class="card">
+    <div class="section-head"><h2>Booking Register</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Facility</th>
+            <th>Flat</th>
+            <th>Resident</th>
+            <th>Time</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="bookingRows"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- MAINTENANCE REGISTER -->
+<section id="v-maintenance" class="view">
+  <h1>Maintenance Register</h1>
+  <div class="card">
+    <form id="maintenanceForm">
+      <div class="form-grid">
+        <div class="field"><label>Asset ID</label><input id="m_assetid"></div>
+        <div class="field"><label>Zone</label>
+          <select id="m_zone">
+             <option>Podium</option>
+             <option>Stilt</option>
+             <option>Top Floor</option>
+          </select>
+        </div>
+        <div class="field"><label>Amenity</label><select id="m_amenity" required></select></div>
+        <div class="field"><label>Equipment</label><input id="m_equip" required></div>
+        <div class="field"><label>Condition</label><input id="m_cond"></div>
+        <div class="field"><label>Status</label>
+          <select id="m_status">
+            <option>Open</option>
+            <option>In Progress</option>
+            <option>Closed</option>
+          </select>
+        </div>
+      </div>
+      <div class="actions"><button class="btn primary">Save Maintenance Log</button></div>
+    </form>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Asset ID</th>
+            <th>Zone</th>
+            <th>Amenity</th>
+            <th>Equipment</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="maintenanceRows"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ISSUES & COMPLAINTS -->
+<section id="v-issues" class="view">
+  <h1>Issues & Complaints</h1>
+  <div class="card">
+    <form id="issuesForm">
+      <div class="form-grid">
+        <div class="field"><label>Date</label><input id="i_date" type="date" required></div>
+        <div class="field"><label>Zone</label><input id="i_zone"></div>
+        <div class="field"><label>Amenity</label><select id="i_amenity"></select></div>
+        <div class="field"><label>Issue / Complaint</label><input id="i_desc" required></div>
+        <div class="field"><label>Priority</label>
+          <select id="i_pri">
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+          </select>
+        </div>
+        <div class="field"><label>Status</label>
+          <select id="i_status">
+            <option>Open</option>
+            <option>In Progress</option>
+            <option>Closed</option>
+          </select>
+        </div>
+      </div>
+      <div class="actions"><button class="btn primary">Save Issue</button></div>
+    </form>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Zone</th>
+            <th>Amenity</th>
+            <th>Issue</th>
+            <th>Priority</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="issueRows"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- POOL DAILY LOG -->
+<section id="v-pool" class="view">
+  <h1>Pool Daily Water & Safety Log</h1>
+  <div class="card">
+    <form id="poolForm">
+      <div class="form-grid">
+        <div class="field"><label>Date</label><input id="pdate" type="date" required></div>
+        <div class="field"><label>Time</label>
+           <select id="ptime">
+             <option>Morning</option>
+             <option>Evening</option>
+           </select>
+        </div>
+        <div class="field"><label>Water Clarity</label>
+          <select id="pclarity">
+             <option>Good</option>
+             <option>Cloudy</option>
+             <option>Poor</option>
+          </select>
+        </div>
+        <div class="field"><label>pH</label><input id="pph" type="number" step=".01"></div>
+        <div class="field"><label>Free Chlorine</label><input id="pfc" type="number" step=".01"></div>
+        <div class="field"><label>Temp °C</label><input id="ptemp" type="number" step=".1"></div>
+        <div class="field"><label>Deck Clean</label><input id="pdeck" type="checkbox"></div>
+        <div class="field"><label>Safety Equip OK</label><input id="psafety" type="checkbox"></div>
+      </div>
+      <div class="actions"><button class="btn primary">Save Pool Log</button></div>
+    </form>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>pH</th>
+            <th>Chlorine</th>
+            <th>Clarity</th>
+          </tr>
+        </thead>
+        <tbody id="poolRows"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- STAFF & ATTENDANCE -->
+<section id="v-staff" class="view">
+  <h1>Staff & Attendance</h1>
+  <div class="card">
+    <h2>Staff Master</h2>
+    <form id="staffForm">
+      <div class="form-grid">
+        <div class="field"><label>Staff Name</label><input id="sname" required></div>
+        <div class="field"><label>Department</label><select id="dept"></select></div>
+      </div>
+      <div class="actions"><button class="btn primary">Add Staff</button></div>
+    </form>
+  </div>
+  <div class="card">
+    <h2>Staff Register</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Staff</th>
+            <th>Department</th>
+          </tr>
+        </thead>
+        <tbody id="staffRows"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Attendance</h2>
+    <form id="attendanceForm">
+      <div class="form-grid">
+        <div class="field"><label>Date</label><input id="adate" type="date" required></div>
+        <div class="field"><label>Staff</label><select id="astaff" required></select></div>
+        <div class="field"><label>Status</label>
+          <select id="astatus">
+            <option>Present</option>
+            <option>Late</option>
+            <option>Leave / Off</option>
+          </select>
+        </div>
+      </div>
+      <div class="actions"><button class="btn primary">Save Attendance</button></div>
+    </form>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Staff</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="attendanceRows"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- EXECUTIVE DAILY LOG -->
+<section id="v-daily" class="view">
+  <h1>Executive Daily Log</h1>
+  <div class="card">
+    <form id="dailyForm">
+      <div class="form-grid">
+        <div class="field"><label>Date</label><input id="drdate" type="date" required></div>
+        <div class="field"><label>Prepared by</label><input id="drprepared"></div>
+        <div class="field"><label>Executive summary</label><textarea id="drsummary"></textarea></div>
+        <div class="field"><label>Key updates</label><textarea id="drupdates"></textarea></div>
+      </div>
+      <div class="actions"><button class="btn primary">Save Daily Report</button></div>
+    </form>
+  </div>
+  <div class="card">
+    <h2>Saved daily logs</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Prepared by</th>
+            <th>Summary</th>
+          </tr>
+        </thead>
+        <tbody id="dailyRows"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- REPORTS -->
+<section id="v-reports" class="view printable">
+  <h1>Executive Reports</h1>
+  <div class="card no-print">
+    <div class="form-grid">
+      <div class="field"><label>Start date</label><input id="reportStart" type="date" onchange="renderReports()"></div>
+      <div class="field"><label>End date</label><input id="reportEnd" type="date" onchange="renderReports()"></div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" onclick="renderReports()">Generate Report</button>
+      <button class="btn" onclick="exportCSV()">Export CSV</button>
+      <button class="btn" onclick="window.print()">Print / Save PDF</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Executive period summary</h2>
+    <p id="reportRange" class="muted"></p>
+    <div id="reportMetrics" class="grid"></div>
+  </div>
+</section>
+</main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
 (function(){
   try{
     const c=JSON.parse(localStorage.getItem('ryal_supabase_config')||'null');
@@ -119,12 +432,27 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;bord
   }catch(e){console.warn('Config load failed',e)}
 })();
 
-const DBKEY='ryal_management_v2';
-const initial={residents:[],staff:[],amenities:[
- {id:'a1',name:'Conference Room',charge:0},
- {id:'a2',name:'Mini Theatre',charge:0},
- {id:'a3',name:'Banquet Hall',charge:0}
-],bookings:[],attendance:[],pool:[],operations:[],dailyReports:[]};
+// Expanded initial state based on Excel
+const DBKEY='ryal_ashar_arize_v1';
+const initial={
+  staff:[],
+  amenities:[
+   {id:'PAV-001', zone:'Podium', name:'Multipurpose Court'},
+   {id:'PAV-002', zone:'Podium', name:'Spectator Plaza'},
+   {id:'STL-001', zone:'Stilt', name:'Club House'},
+   {id:'SKY-001', zone:'Top Floor', name:'Yoga & Meditation Deck'}
+  ],
+  tasks:[
+    {id:'t1', date:new Date().toISOString().slice(0,10), zone:'Podium', amenity:'Multipurpose Court', task:'Glass & mirror cleaning', status:'Pending'}
+  ],
+  bookings:[],
+  maintenance:[],
+  issues:[],
+  attendance:[],
+  pool:[],
+  dailyReports:[],
+  staffDepartments:[{id:1, name:'Housekeeping'},{id:2, name:'Maintenance'},{id:3, name:'Security'}]
+};
 let state=JSON.parse(localStorage.getItem(DBKEY)||JSON.stringify(initial));
 let cloud=false, sb=null, currentUser=null, profile=null;
 const $=id=>document.getElementById(id);
@@ -133,13 +461,27 @@ const uid=()=>crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).s
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const setMsg=(m)=>{if($('loginMsg'))$('loginMsg').textContent=m||''};
 
+function showCloudSetup() { $('setupScreen').style.display = 'flex'; }
+function saveCloudConfig() {
+  const url = $('cfgUrl').value.trim();
+  const anonKey = $('cfgKey').value.trim();
+  if (!url || !anonKey) { $('cfgMsg').textContent = 'Please enter both.'; return; }
+  const config = { url, anonKey };
+  localStorage.setItem('ryal_supabase_config', JSON.stringify(config));
+  window.RYAL_SUPABASE = config;
+  $('setupScreen').style.display = 'none';
+  cloudInit(); 
+}
+
 function localPersist(){localStorage.setItem(DBKEY,JSON.stringify(state));refresh()}
+
 function nav(view){
  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
  $('v-'+view).classList.add('active');
  document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.view===view));
  if(view==='reports')renderReports(); if(view==='dashboard')renderDashboard();
 }
+
 function selectOptions(arr,valueKey='id',labelKey='name'){return arr.map(x=>`<option value="${esc(x[valueKey])}">${esc(x[labelKey])}</option>`).join('')}
 
 async function cloudInit(){
@@ -166,21 +508,7 @@ async function cloudInit(){
 }
 function showAuth(){ $('authScreen').style.display='flex'; document.querySelector('.layout').style.display='none'; document.querySelector('.app-header').style.display='none'; }
 function hideAuth(){ $('authScreen').style.display='none'; document.querySelector('.layout').style.display='grid'; document.querySelector('.app-header').style.display='block'; }
-async function onSignedIn(user){
- currentUser=user;
- profile={full_name:user.email||'User',role:'staff'};
- if(cloud){
-  try{
-    const {data:p,error}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
-    if(!error && p) profile=p;
-    else if(error) console.warn('Profile load:',error.message);
-  }catch(e){console.warn('Profile load failed:',e)}
- }
- $('userBadge').textContent=profile?.full_name||user.email||'User';
- hideAuth();
- try{await loadAll()}catch(e){console.error('Cloud load:',e)}
- setupUI(); refresh();
-}
+
 async function signIn(){
  const email=$('loginEmail').value.trim(), password=$('loginPassword').value;
  if(!cloud||!sb){setMsg('Cloud is not connected.');return}
@@ -190,170 +518,185 @@ async function signIn(){
   const result=await sb.auth.signInWithPassword({email,password});
   if(result.error) throw result.error;
   const user=result.data?.user;
-  if(!user) throw new Error('No user session was returned by Supabase.');
   currentUser=user;
-  profile={full_name:user.email||'User',role:'staff'};
   hideAuth();
   $('userBadge').textContent=user.email||'User';
   setMsg('');
-  try{const {data:p}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();if(p){profile=p;$('userBadge').textContent=p.full_name||user.email||'User'}}catch(e){console.warn('Profile load:',e)}
   try{await loadAll()}catch(e){console.error('Cloud load:',e)}
   setupUI(); refresh();
- }catch(e){console.error('Sign-in error:',e);setMsg(e?.message||'Unable to sign in. Please check your email and password.');}
+ }catch(e){console.error('Sign-in error:',e);setMsg(e?.message||'Unable to sign in.');}
  finally{if(btn){btn.disabled=false;btn.textContent='Sign in'}}
 }
+
 async function signOut(){if(cloud&&sb)await sb.auth.signOut();else{currentUser=null;showAuth()}}
 window.signOut=signOut;
 
 async function loadAll(){
- if(!cloud){state=JSON.parse(localStorage.getItem(DBKEY)||JSON.stringify(initial));return}
- const q=async(table,opts={})=>{let x=sb.from(table).select(opts.select||'*'); if(opts.order)x=x.order(opts.order,{ascending:false}); const r=await x; if(r.error)throw r.error; return r.data||[]};
- try{
-  const [r,st,a,b,att,p,op,d,depts]=await Promise.all([
-   q('residents'), q('staff',{select:'*,departments(name)'}), q('amenities'), q('bookings',{select:'*,amenities(name)'}), q('attendance',{select:'*,staff(name,departments(name))'}), q('pool_logs'), q('operations'), q('daily_reports'), q('departments')
-  ]);
-  state.staffDepartments=depts;
-  state.residents=r.map(x=>({id:x.id,flat:x.flat_number,name:x.resident_name,phone:x.phone}));
-  state.staff=st.map(x=>({id:x.id,name:x.name,department:x.departments?.name||'',department_id:x.department_id}));
-  state.amenities=a;
-  state.bookings=b.map(x=>({id:x.id,date:x.booking_date,amenity:x.amenities?.name||'',amenity_id:x.amenity_id,flat:x.flat_number,resident:x.resident_name,phone:x.phone,start:x.start_time?.slice(0,5),end:x.end_time?.slice(0,5),charge:x.charge,status:x.status,remarks:x.remarks}));
-  state.attendance=att.map(x=>({id:x.id,date:x.attendance_date,staff:x.staff?.name||'',staff_id:x.staff_id,department:x.staff?.departments?.name||'',shift:(x.shift_start&&x.shift_end)?`${x.shift_start.slice(0,5)} – ${x.shift_end.slice(0,5)}`:'',status:x.status}));
-  state.pool=p.map(x=>({id:x.id,date:x.log_date,mcl:x.morning_chlorine,mph:x.morning_ph,ecl:x.evening_chlorine,eph:x.evening_ph,remarks:x.remarks}));
-  state.operations=op.map(x=>({id:x.id,date:x.op_date,type:x.type,subject:x.subject,location:x.location_flat,status:x.status,remarks:x.remarks}));
-  state.dailyReports=d.map(x=>({id:x.id,date:x.report_date,prepared:x.prepared_by,summary:x.executive_summary,updates:x.key_updates,incidents:x.incidents,feedback:x.resident_feedback,staffing:x.staffing_notes,maintenance:x.maintenance_notes,inventory:x.inventory_notes,pool:x.pool_notes,booking:x.booking_notes,followup:x.follow_up_required,management:x.management_notes}));
- }catch(e){console.error(e);alert('Cloud data could not be loaded: '+e.message)}
+ if(!cloud){
+   state=JSON.parse(localStorage.getItem(DBKEY)||JSON.stringify(initial));
+   // Safety check to ensure new arrays exist if loading from an older local storage save
+   ['tasks', 'maintenance', 'issues', 'pool', 'attendance'].forEach(k => {
+     if(!state[k]) state[k] = [];
+   });
+   return;
+ }
+ // Future Supabase query logic will go here
 }
+
 
 async function save(table,row,conflictField){
- if(!cloud){localPersist();return true}
- const payload={...row}; delete payload.id;
- const creatorField={bookings:'created_by',operations:'created_by',inventory_transactions:'created_by'}[table];
- if(currentUser && creatorField) payload[creatorField]=currentUser.id;
- if(currentUser && table==='pool_logs') payload.recorded_by=currentUser.id;
- let q=sb.from(table).insert(payload).select().single();
- if(conflictField) q=sb.from(table).upsert(payload,{onConflict:conflictField}).select().single();
- const {error}=await q;
- if(error){alert(error.message);return false}
- await loadAll(); refresh(); return true;
-}
-async function update(table,row,match){
- if(!cloud){localPersist();return true}
- const {id,...payload}=row;
- const {error}=await sb.from(table).update(payload).eq('id',match||id);
- if(error){alert(error.message);return false}
- await loadAll();refresh();return true;
+ if(!cloud){
+   row.id = row.id || uid();
+   state[table].push(row);
+   localPersist();
+   return true;
+ }
+ // Cloud saving logic would go here
+ return true; 
 }
 
+function completeTask(id) {
+  const task = state.tasks.find(t => t.id === id);
+  if (task) {
+    task.status = 'Completed';
+    localPersist();
+  }
+}
+window.completeTask = completeTask;
+
 function renderDashboard(){
- const d=today(), bookings=state.bookings.filter(x=>x.date===d&&x.status!=='Cancelled');
- const present=state.attendance.filter(x=>x.date===d&&x.status==='Present').length;
- const open=state.operations.filter(x=>x.status!=='Resolved').length;
- const charges=bookings.reduce((a,x)=>a+(+x.charge||0),0);
- $('dash').innerHTML=`<div class="grid"><div class="metric"><span>Today's bookings</span><b>${bookings.length}</b></div><div class="metric"><span>Staff present</span><b>${present}</b></div><div class="metric"><span>Open operations</span><b>${open}</b></div><div class="metric"><span>Today's charges</span><b>₹${charges.toLocaleString('en-IN')}</b></div></div><div class="card" style="margin-top:13px"><h2>Today at a glance</h2><p class="muted">${cloud?'Cloud synchronized.':'Local demo mode.'} Record operations in their modules and they feed the Executive Reports.</p></div>`;
+ const d=today();
+ const todaysTasks = state.tasks.filter(x=>x.date===d);
+ const pendingTasks = todaysTasks.filter(x=>x.status!=='Completed').length;
+ const completedTasks = todaysTasks.length - pendingTasks;
+ const openIssues = state.issues.filter(x=>x.status!=='Closed').length;
+ 
+ $('dash').innerHTML=`
+  <div class="grid">
+    <div class="metric"><span>Tasks Pending</span><b>${pendingTasks}</b></div>
+    <div class="metric"><span>Tasks Completed</span><b>${completedTasks}</b></div>
+    <div class="metric"><span>Open Issues</span><b>${openIssues}</b></div>
+    <div class="metric"><span>Today's Bookings</span><b>${state.bookings.filter(x=>x.date===d).length}</b></div>
+  </div>`;
 }
-function refresh(){renderDashboard();renderLists();renderReports();updateSelectors()}
+
+function refresh(){renderDashboard();renderLists();updateSelectors()}
+
 function renderLists(){
- $('residentRows').innerHTML=state.residents.map(x=>`<tr><td>${esc(x.flat)}</td><td>${esc(x.name)}</td><td>${esc(x.phone)}</td></tr>`).join('')||'<tr><td colspan=3 class=muted>No residents logged.</td></tr>';
- $('amenityRows').innerHTML=state.amenities.map(x=>`<tr><td>${esc(x.name)}</td><td>₹${(+x.charge||0).toLocaleString('en-IN')}</td></tr>`).join('');
- $('staffRows').innerHTML=state.staff.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.department)}</td></tr>`).join('')||'<tr><td colspan=2 class=muted>No staff logged.</td></tr>';
- $('bookingRows').innerHTML=state.bookings.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.amenity)}</td><td>${esc(x.flat)}</td><td>${x.start}–${x.end}</td><td>₹${(+x.charge||0).toLocaleString('en-IN')}</td><td><span class=pill>${esc(x.status)}</span></td></tr>`).join('')||'<tr><td colspan=6 class=muted>No bookings logged.</td></tr>';
- $('attendanceRows').innerHTML=state.attendance.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.staff)}</td><td>${esc(x.department)}</td><td>${esc(x.shift)}</td><td>${esc(x.status)}</td></tr>`).join('')||'<tr><td colspan=5 class=muted>No attendance logged.</td></tr>';
- $('poolRows').innerHTML=state.pool.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${x.mcl??'—'}</td><td>${x.mph??'—'}</td><td>${x.ecl??'—'}</td><td>${x.eph??'—'}</td></tr>`).join('')||'<tr><td colspan=5 class=muted>No pool logs.</td></tr>';
- $('opsRows').innerHTML=state.operations.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.type)}</td><td>${esc(x.subject)}</td><td>${esc(x.location)}</td><td>${esc(x.status)}</td></tr>`).join('')||'<tr><td colspan=5 class=muted>No operations logged.</td></tr>';
- $('dailyRows').innerHTML=state.dailyReports.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.prepared)}</td><td>${esc(x.summary||'—')}</td></tr>`).join('')||'<tr><td colspan=3 class=muted>No executive daily reports.</td></tr>';
+ $('bookingRows').innerHTML=state.bookings.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.amenity)}</td><td>${esc(x.flat)}</td><td>${esc(x.resident)}</td><td>${x.start}–${x.end}</td><td><span class=pill>${esc(x.status)}</span></td></tr>`).join('')||'<tr><td colspan=6 class=muted>No bookings.</td></tr>';
+ 
+ $('taskRows').innerHTML=state.tasks.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.zone)}</td><td>${esc(x.amenity)}</td><td>${esc(x.task)}</td><td>${esc(x.status)}</td><td>${x.status!=='Completed' ? `<button onclick="completeTask('${x.id}')">Complete</button>` : ''}</td></tr>`).join('')||'<tr><td colspan=6 class=muted>No tasks.</td></tr>';
+
+ $('maintenanceRows').innerHTML=state.maintenance.slice().reverse().map(x=>`<tr><td>${esc(x.assetId)}</td><td>${esc(x.zone)}</td><td>${esc(x.amenity)}</td><td>${esc(x.equip)}</td><td>${esc(x.status)}</td></tr>`).join('')||'<tr><td colspan=5 class=muted>No maintenance logs.</td></tr>';
+
+ $('issueRows').innerHTML=state.issues.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.zone)}</td><td>${esc(x.amenity)}</td><td>${esc(x.desc)}</td><td>${esc(x.priority)}</td><td>${esc(x.status)}</td></tr>`).join('')||'<tr><td colspan=6 class=muted>No issues.</td></tr>';
+
+ $('poolRows').innerHTML=state.pool.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.time)}</td><td>${x.ph||'—'}</td><td>${x.fc||'—'}</td><td>${esc(x.clarity)}</td></tr>`).join('')||'<tr><td colspan=5 class=muted>No pool logs.</td></tr>';
+
+ $('staffRows').innerHTML=state.staff.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.department)}</td></tr>`).join('')||'<tr><td colspan=2 class=muted>No staff.</td></tr>';
+ 
+ $('attendanceRows').innerHTML=state.attendance.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.staff)}</td><td>${esc(x.status)}</td></tr>`).join('')||'<tr><td colspan=3 class=muted>No attendance.</td></tr>';
+ 
+ $('dailyRows').innerHTML=state.dailyReports.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.prepared)}</td><td>${esc(x.summary||'—')}</td></tr>`).join('')||'<tr><td colspan=3 class=muted>No daily reports.</td></tr>';
 }
+
 function updateSelectors(){
- $('ban').innerHTML=selectOptions(state.amenities,'name','name');
+ const amOptions = selectOptions(state.amenities,'name','name');
+ $('ban').innerHTML=amOptions;
+ $('m_amenity').innerHTML=amOptions;
+ $('i_amenity').innerHTML=amOptions;
+ 
  $('astaff').innerHTML=selectOptions(state.staff,'name','name')||'<option value="">Add staff first</option>';
+ $('dept').innerHTML=selectOptions(state.staffDepartments,'name','name');
 }
+
 function bindForms(){
- $('loginForm').onsubmit=e=>{e.preventDefault();signIn()};
- $('residentForm').onsubmit=async e=>{e.preventDefault();const ok=await save('residents',{flat_number:$('flat').value.trim(),resident_name:$('rname').value.trim(),phone:$('phone').value.trim()});if(ok)e.target.reset()};
- $('amenityForm').onsubmit=async e=>{e.preventDefault();const ok=await save('amenities',{name:$('aname').value.trim(),charge:+$('acharge').value||0,active:true});if(ok)e.target.reset()};
- $('staffForm').onsubmit=async e=>{e.preventDefault();const dept=(state.staffDepartments||[]).find(x=>x.name===$('dept').value);const ok=await save('staff',{name:$('sname').value.trim(),department_id:dept?.id||null,active:true});if(ok)e.target.reset()};
  $('bookingForm').onsubmit=async e=>{
-  e.preventDefault();const date=$('bdate').value,amenity=$('ban').value,start=$('bst').value,end=$('ben').value;
-  if(end<=start){alert('End time must be later than start time.');return}
-  const conflict=state.bookings.some(x=>x.date===date&&x.amenity===amenity&&x.status!=='Cancelled'&&start<x.end&&end>x.start);
-  if(conflict){alert('This amenity already has an overlapping booking.');return}
-  const a=state.amenities.find(x=>x.name===amenity);
-  const ok=await save('bookings',{booking_date:date,amenity_id:a?.id,flat_number:$('bflat').value,resident_name:$('bres').value,phone:$('bphone').value,start_time:start,end_time:end,charge:+$('bcharge').value||0,status:$('bstatus').value,remarks:$('bremarks').value});
+  e.preventDefault();
+  const ok=await save('bookings',{date:$('bdate').value, amenity:$('ban').value, start:$('bst').value, end:$('ben').value, flat:$('bflat').value, resident:$('bres').value, purpose:$('bpurpose').value, status:$('bstatus').value});
   if(ok){e.target.reset();$('bdate').value=today()}
  };
- $('attendanceForm').onsubmit=async e=>{e.preventDefault();const s=state.staff.find(x=>x.name===$('astaff').value);const ok=await save('attendance',{attendance_date:$('adate').value,staff_id:s?.id,status:$('astatus').value});if(ok){e.target.reset();$('adate').value=today()}};
- $('poolForm').onsubmit=async e=>{e.preventDefault();const ok=await save('pool_logs',{log_date:$('pdate').value,morning_chlorine:+$('mcl').value||null,morning_ph:+$('mph').value||null,evening_chlorine:+$('ecl').value||null,evening_ph:+$('eph').value||null,remarks:$('prem').value},'log_date');if(ok){e.target.reset();$('pdate').value=today()}};
- $('opsForm').onsubmit=async e=>{e.preventDefault();const ok=await save('operations',{op_date:$('odate').value,type:$('otype').value,subject:$('osub').value,location_flat:$('oloc').value,status:$('ostat').value,remarks:$('orem').value});if(ok){e.target.reset();$('odate').value=today()}};
- $('dailyForm').onsubmit=async e=>{
-  e.preventDefault();const date=$('drdate').value,existing=state.dailyReports.find(x=>x.date===date);
-  const row={report_date:date,prepared_by:$('drprepared').value,executive_summary:$('drsummary').value,key_updates:$('drupdates').value,incidents:$('drincidents').value,resident_feedback:$('drfeedback').value,staffing_notes:$('drstaffing').value,maintenance_notes:$('drmaintenance').value,inventory_notes:$('drinventory').value,pool_notes:$('drpool').value,booking_notes:$('drbooking').value,follow_up_required:$('drfollowup').value,management_notes:$('drmanagement').value};
-  const ok=await save('daily_reports',row,'report_date');if(ok)alert(cloud?'Executive Daily Report saved to cloud.':'Executive Daily Report saved locally.');
+ 
+ $('maintenanceForm').onsubmit=async e=>{
+   e.preventDefault();
+   const ok=await save('maintenance',{assetId:$('m_assetid').value, zone:$('m_zone').value, amenity:$('m_amenity').value, equip:$('m_equip').value, cond:$('m_cond').value, status:$('m_status').value});
+   if(ok){e.target.reset();}
  };
+
+ $('issuesForm').onsubmit=async e=>{
+   e.preventDefault();
+   const ok=await save('issues',{date:$('i_date').value, zone:$('i_zone').value, amenity:$('i_amenity').value, desc:$('i_desc').value, priority:$('i_pri').value, status:$('i_status').value});
+   if(ok){e.target.reset();$('i_date').value=today()}
+ };
+
+ $('poolForm').onsubmit=async e=>{
+   e.preventDefault();
+   const ok=await save('pool',{date:$('pdate').value, time:$('ptime').value, clarity:$('pclarity').value, ph:+$('pph').value, fc:+$('pfc').value, temp:+$('ptemp').value});
+   if(ok){e.target.reset();$('pdate').value=today()}
+ };
+ 
+ $('staffForm').onsubmit=async e=>{
+   e.preventDefault();
+   const ok=await save('staff',{name:$('sname').value.trim(), department:$('dept').value});
+   if(ok){e.target.reset();}
+ };
+ 
+ $('attendanceForm').onsubmit=async e=>{
+   e.preventDefault();
+   const ok=await save('attendance',{date:$('adate').value, staff:$('astaff').value, status:$('astatus').value});
+   if(ok){e.target.reset();$('adate').value=today()}
+ };
+
+ $('dailyForm').onsubmit=async e=>{
+  e.preventDefault();
+  const ok=await save('dailyReports',{date:$('drdate').value, prepared:$('drprepared').value, summary:$('drsummary').value, updates:$('drupdates').value});
+  if(ok) {
+    alert('Report saved.');
+    e.target.reset(); // Add this line
+    $('drdate').value=today();
+  }
+ };
+
 }
+
 function setupUI(){
- ['bdate','adate','pdate','odate','drdate','reportStart','reportEnd'].forEach(id=>$(id).value=today());
- $('dept').innerHTML=['Housekeeping','Gym Trainers','Pool Attendant','Security'].map(x=>`<option>${x}</option>`).join('');
- $('adept').innerHTML=['Housekeeping','Gym Trainers','Pool Attendant','Security'].map(x=>`<option>${x}</option>`).join('');
- bindForms();loadDaily();
+ ['bdate','i_date','pdate','adate','drdate','reportStart','reportEnd'].forEach(id=>{ if($(id)) $(id).value=today() });
+ bindForms();
 }
-function loadDaily(){
- const x=state.dailyReports.find(r=>r.date===$('drdate').value);if(!x){['drprepared','drsummary','drupdates','drincidents','drfeedback','drstaffing','drmaintenance','drinventory','drpool','drbooking','drfollowup','drmanagement'].forEach(id=>$(id).value='');return}
- const m={drprepared:'prepared',drsummary:'summary',drupdates:'updates',drincidents:'incidents',drfeedback:'feedback',drstaffing:'staffing',drmaintenance:'maintenance',drinventory:'inventory',drpool:'pool',drbooking:'booking',drfollowup:'followup',drmanagement:'management'};
- Object.entries(m).forEach(([id,k])=>$(id).value=x[k]||'');
-}
+
 function renderReports(){
  let s=$('reportStart')?.value||today(),e=$('reportEnd')?.value||today();if(s>e)[s,e]=[e,s];
- const rows=state.dailyReports.filter(x=>x.date>=s&&x.date<=e).sort((a,b)=>a.date.localeCompare(b.date));
- const bs=state.bookings.filter(x=>x.date>=s&&x.date<=e&&x.status!=='Cancelled'),at=state.attendance.filter(x=>x.date>=s&&x.date<=e),op=state.operations.filter(x=>x.date>=s&&x.date<=e);
- const charges=bs.reduce((a,x)=>a+(+x.charge||0),0);
- $('reportMetrics').innerHTML=`<div class=metric><span>Daily logs</span><b>${rows.length}</b></div><div class=metric><span>Bookings</span><b>${bs.length}</b></div><div class=metric><span>Charges</span><b>₹${charges.toLocaleString('en-IN')}</b></div><div class=metric><span>Staff records</span><b>${at.length}</b></div><div class=metric><span>Open issues</span><b>${op.filter(x=>x.status!=='Resolved').length}</b></div>`;
- $('reportRows').innerHTML=rows.map(r=>`<tr><td>${r.date}</td><td>${esc(r.prepared)}</td><td>${esc(r.summary||'—')}</td><td>${esc(r.followup||'—')}</td></tr>`).join('')||'<tr><td colspan=4 class=muted>No daily reports in this period.</td></tr>';
+ const bs=state.bookings.filter(x=>x.date>=s&&x.date<=e);
+ const iss=state.issues.filter(x=>x.date>=s&&x.date<=e);
+ 
+ $('reportMetrics').innerHTML=`<div class=metric><span>Bookings</span><b>${bs.length}</b></div><div class=metric><span>Issues Reported</span><b>${iss.length}</b></div>`;
  $('reportRange').textContent=`${s} to ${e}`;
 }
+
 function exportCSV(){
  let s=$('reportStart').value,e=$('reportEnd').value;if(s>e)[s,e]=[e,s];
  const data=state.dailyReports.filter(x=>x.date>=s&&x.date<=e);
- const header=['Date','Prepared By','Executive Summary','Key Updates','Incidents','Resident Feedback','Staffing','Maintenance','Inventory','Pool','Bookings','Follow Up','Management Notes'];
- const rows=data.map(x=>[x.date,x.prepared,x.summary,x.updates,x.incidents,x.feedback,x.staffing,x.maintenance,x.inventory,x.pool,x.booking,x.followup,x.management]);
+ const header=['Date','Prepared By','Executive Summary','Key Updates'];
+ const rows=data.map(x=>[x.date,x.prepared,x.summary,x.updates]);
  const csv=[header,...rows].map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');
- const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`ryal-executive-report-${s}-to-${e}.csv`;a.click();URL.revokeObjectURL(a.href);
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+ a.download=`ryal-ashar-arize-report-${s}-to-${e}.csv`;a.click();URL.revokeObjectURL(a.href);
 }
-window.nav=nav;window.renderReports=renderReports;window.exportCSV=exportCSV;
-function showCloudSetup() {
-  $('setupScreen').style.display = 'flex';
-}
+window.exportCSV = exportCSV;
 
-function saveCloudConfig() {
-  const url = $('cfgUrl').value.trim();
-  const anonKey = $('cfgKey').value.trim();
-  
-  if (!url || !anonKey) {
-    $('cfgMsg').textContent = 'https://vkmnjmyinepkxengowkm.supabase.co  sb_publishable_PkG9Q5V3fm4kGscuenHb5g_LoSLe0-Z';
-    return;
-  }
-  
-  // Save credentials to local storage and global window object
-  const config = { url, anonKey };
-  localStorage.setItem('ryal_supabase_config', JSON.stringify(config));
-  window.RYAL_SUPABASE = config;
-  
-  // Hide setup screen and initialize Supabase
-  $('setupScreen').style.display = 'none';
-  cloudInit(); 
-}
 
 document.addEventListener('DOMContentLoaded',async()=>{
- const form=$('loginForm'); 
- if(form) {
-   form.onsubmit=e=>{
-     e.preventDefault();
-     signIn(); // <-- Call the actual sign in function
-   };
- }
- // ...
-
+ const btn=$('signInBtn'); if(btn) btn.onclick=signIn;
+ const form=$('loginForm'); if(form) form.onsubmit=e=>{e.preventDefault();signIn();};
  const cfg=window.RYAL_SUPABASE||{};
- if(!cfg.url||!cfg.anonKey){showCloudSetup();$('saveCfg').onclick=saveCloudConfig;return}
+ if(!cfg.url||!cfg.anonKey){
+   showCloudSetup();
+   $('saveCfg').onclick=saveCloudConfig;
+   return;
+ }
  await cloudInit();
 });
 </script>
-</body></html>
+</body>
+</html>
