@@ -52,7 +52,7 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;bord
         <form id="loginForm">
           <div class="field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username" required></div>
           <div class="field"><label>Password</label><input id="loginPassword" type="password" autocomplete="current-password" required></div>
-          <button class="btn primary" type="submit">Sign in</button>
+          <button id="signInBtn" class="btn primary" type="submit">Sign in</button>
           <div id="loginMsg" class="muted"></div>
         </form>
         <div class="auth-note">Cloud mode requires the Supabase URL and public anon/publishable key in <code>supabase.config.js</code>.</div>
@@ -319,8 +319,15 @@ function exportCSV(){
 }
 window.nav=nav;window.renderReports=renderReports;window.exportCSV=exportCSV;
 document.addEventListener('DOMContentLoaded',async()=>{
- const btn=$('signInBtn'); if(btn) btn.onclick=signIn;
- const form=$('loginForm'); if(form) form.onsubmit=e=>{e.preventDefault();return false};
+ const form=$('loginForm'); 
+ if(form) {
+   form.onsubmit=e=>{
+     e.preventDefault();
+     signIn(); // <-- Call the actual sign in function
+   };
+ }
+ // ...
+
  const cfg=window.RYAL_SUPABASE||{};
  if(!cfg.url||!cfg.anonKey){showCloudSetup();$('saveCfg').onclick=saveCloudConfig;return}
  await cloudInit();
