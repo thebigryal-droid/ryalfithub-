@@ -318,6 +318,29 @@ function exportCSV(){
  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`ryal-executive-report-${s}-to-${e}.csv`;a.click();URL.revokeObjectURL(a.href);
 }
 window.nav=nav;window.renderReports=renderReports;window.exportCSV=exportCSV;
+function showCloudSetup() {
+  $('setupScreen').style.display = 'flex';
+}
+
+function saveCloudConfig() {
+  const url = $('cfgUrl').value.trim();
+  const anonKey = $('cfgKey').value.trim();
+  
+  if (!url || !anonKey) {
+    $('cfgMsg').textContent = 'https://vkmnjmyinepkxengowkm.supabase.co  sb_publishable_PkG9Q5V3fm4kGscuenHb5g_LoSLe0-Z';
+    return;
+  }
+  
+  // Save credentials to local storage and global window object
+  const config = { url, anonKey };
+  localStorage.setItem('ryal_supabase_config', JSON.stringify(config));
+  window.RYAL_SUPABASE = config;
+  
+  // Hide setup screen and initialize Supabase
+  $('setupScreen').style.display = 'none';
+  cloudInit(); 
+}
+
 document.addEventListener('DOMContentLoaded',async()=>{
  const form=$('loginForm'); 
  if(form) {
