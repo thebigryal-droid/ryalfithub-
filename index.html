@@ -437,10 +437,53 @@ const DBKEY='ryal_ashar_arize_v1';
 const initial={
   staff:[],
   amenities:[
-   {id:'PAV-001', zone:'Podium', name:'Multipurpose Court'},
-   {id:'PAV-002', zone:'Podium', name:'Spectator Plaza'},
-   {id:'STL-001', zone:'Stilt', name:'Club House'},
-   {id:'SKY-001', zone:'Top Floor', name:'Yoga & Meditation Deck'}
+    { "id": "PAV-001", "zone": "Podium", "name": "Multipurpose Court" },
+    { "id": "PAV-002", "zone": "Podium", "name": "Spectator Plaza" },
+    { "id": "PAV-003", "zone": "Podium", "name": "Indoor Badminton" },
+    { "id": "PAV-004", "zone": "Podium", "name": "Amphitheatre" },
+    { "id": "PAV-005", "zone": "Podium", "name": "Toddler's Play Area" },
+    { "id": "PAV-006", "zone": "Podium", "name": "Kids Play Area" },
+    { "id": "PAV-007", "zone": "Podium", "name": "Trampoline Park" },
+    { "id": "PAV-008", "zone": "Podium", "name": "Parents Seating Area" },
+    { "id": "PAV-009", "zone": "Podium", "name": "Open Turf" },
+    { "id": "PAV-010", "zone": "Podium", "name": "Floral Gardens" },
+    { "id": "STL-001", "zone": "Stilt", "name": "Club House" },
+    { "id": "STL-002", "zone": "Stilt", "name": "Gym" },
+    { "id": "STL-003", "zone": "Stilt", "name": "CrossFit Area" },
+    { "id": "STL-004", "zone": "Stilt", "name": "Conference Room" },
+    { "id": "STL-005", "zone": "Stilt", "name": "Mini Theatre" },
+    { "id": "STL-006", "zone": "Stilt", "name": "Infinity Swimming Pool" },
+    { "id": "STL-007", "zone": "Stilt", "name": "Kids Pool" },
+    { "id": "STL-008", "zone": "Stilt", "name": "Massage Room" },
+    { "id": "STL-009", "zone": "Stilt", "name": "Sundowner Party Zone" },
+    { "id": "STL-010", "zone": "Stilt", "name": "Viewing Deck" },
+    { "id": "STL-011", "zone": "Stilt", "name": "Senior Citizen Area" },
+    { "id": "STL-012", "zone": "Stilt", "name": "Skating Rink" },
+    { "id": "STL-013", "zone": "Stilt", "name": "Box Cricket" },
+    { "id": "STL-014", "zone": "Stilt", "name": "Mini Golf" },
+    { "id": "STL-015", "zone": "Stilt", "name": "Banquet Hall" },
+    { "id": "STL-016", "zone": "Stilt", "name": "Celebration Lawn" },
+    { "id": "STL-017", "zone": "Stilt", "name": "Barbeque Area" },
+    { "id": "STL-018", "zone": "Stilt", "name": "Guest Room 1" },
+    { "id": "STL-019", "zone": "Stilt", "name": "Guest Room 2" },
+    { "id": "STL-020", "zone": "Stilt", "name": "Guest Room 3" },
+    { "id": "STL-021", "zone": "Stilt", "name": "Guest Room 4" },
+    { "id": "SKY-001", "zone": "Top Floor", "name": "Yoga & Meditation Deck" },
+    { "id": "SKY-002", "zone": "Top Floor", "name": "Hammock Plaza" },
+    { "id": "SKY-003", "zone": "Top Floor", "name": "Party Deck" },
+    { "id": "SKY-004", "zone": "Top Floor", "name": "Mini Serving Counter" },
+    { "id": "SKY-005", "zone": "Top Floor", "name": "Ball Pool Area" },
+    { "id": "SKY-006", "zone": "Top Floor", "name": "Air Hockey" },
+    { "id": "SKY-007", "zone": "Top Floor", "name": "PlayStation Zone" },
+    { "id": "SKY-008", "zone": "Top Floor", "name": "Mini Futsal Area" },
+    { "id": "SKY-009", "zone": "Top Floor", "name": "Indoor Games Area" },
+    { "id": "SKY-010", "zone": "Top Floor", "name": "Carrom" },
+    { "id": "SKY-011", "zone": "Top Floor", "name": "Cards" },
+    { "id": "SKY-012", "zone": "Top Floor", "name": "Snooker" },
+    { "id": "SKY-013", "zone": "Top Floor", "name": "Dance Studio" },
+    { "id": "SKY-014", "zone": "Top Floor", "name": "Arts & Craft Room" },
+    { "id": "SKY-015", "zone": "Top Floor", "name": "Toddler's Play Area" },
+    { "id": "SKY-016", "zone": "Top Floor", "name": "Creche" }
   ],
   tasks:[
     {id:'t1', date:new Date().toISOString().slice(0,10), zone:'Podium', amenity:'Multipurpose Court', task:'Glass & mirror cleaning', status:'Pending'}
@@ -453,6 +496,7 @@ const initial={
   dailyReports:[],
   staffDepartments:[{id:1, name:'Housekeeping'},{id:2, name:'Maintenance'},{id:3, name:'Security'}]
 };
+
 let state=JSON.parse(localStorage.getItem(DBKEY)||JSON.stringify(initial));
 let cloud=false, sb=null, currentUser=null, profile=null;
 const $=id=>document.getElementById(id);
