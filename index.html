@@ -112,6 +112,12 @@ table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;bord
 </section>
 </main></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
+(function(){
+  try{
+    const c=JSON.parse(localStorage.getItem('ryal_supabase_config')||'null');
+    if(c && c.url && c.anonKey) window.RYAL_SUPABASE=c;
+  }catch(e){console.warn('Config load failed',e)}
+})();
 
 const DBKEY='ryal_management_v2';
 const initial={residents:[],staff:[],amenities:[
@@ -141,9 +147,17 @@ async function cloudInit(){
  cloud=!!(window.supabase&&cfg.url&&cfg.anonKey);
  if(!cloud){$('cloudStatus').textContent='LOCAL DEMO';return false}
  sb=window.supabase.createClient(cfg.url,cfg.anonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
- const {data:{session}}=await sb.auth.getSession();
+ const {data:{session},error:sessionError}=await sb.auth.getSession();
+ if(sessionError){console.error(sessionError); setMsg(sessionError.message); showAuth(); return false;}
  if(session){await onSignedIn(session.user)} else showAuth();
- sb.auth.onAuthStateChange(async (_event,session)=>{if(session)await onSignedIn(session.user);else showAuth()});
+ // Do not await Supabase/database calls inside onAuthStateChange.
+ // Supabase recommends keeping this callback lightweight to avoid auth lock/deadlock.
+ sb.auth.onAuthStateChange((_event,session)=>{
+   setTimeout(()=>{
+     if(session) onSignedIn(session.user).catch(e=>{console.error(e); setMsg(e.message||'Unable to load your account.')});
+     else showAuth();
+   },0);
+ });
  $('cloudStatus').textContent='CLOUD';
  return true;
 }
@@ -151,19 +165,31 @@ function showAuth(){ $('authScreen').style.display='flex'; document.querySelecto
 function hideAuth(){ $('authScreen').style.display='none'; document.querySelector('.layout').style.display='grid'; document.querySelector('.app-header').style.display='block'; }
 async function onSignedIn(user){
  currentUser=user;
+ profile={full_name:user.email||'User',role:'staff'};
  if(cloud){
-  const {data:p}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
-  profile=p||{full_name:user.email,role:'staff'};
+  try{
+    const {data:p,error}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
+    if(!error && p) profile=p;
+    else if(error) console.warn('Profile load:',error.message);
+  }catch(e){console.warn('Profile load failed:',e)}
  }
  $('userBadge').textContent=profile?.full_name||user.email||'User';
- hideAuth(); await loadAll(); setupUI(); refresh();
+ hideAuth();
+ try{await loadAll()}catch(e){console.error('Cloud load:',e)}
+ setupUI(); refresh();
 }
 async function signIn(){
  const email=$('loginEmail').value.trim(), password=$('loginPassword').value;
  if(!cloud){setMsg('Cloud configuration is not enabled.');return}
  setMsg('Signing in…');
- const {error}=await sb.auth.signInWithPassword({email,password});
- setMsg(error?error.message:'');
+ try{
+   const {data,error}=await sb.auth.signInWithPassword({email,password});
+   if(error){setMsg(error.message);return}
+   if(!data?.session||!data?.user){setMsg('Sign-in succeeded but no active session was returned. Please try again.');return}
+   // Complete the transition directly; the auth-state listener is only a backup.
+   await onSignedIn(data.user);
+   setMsg('');
+ }catch(e){console.error(e);setMsg(e?.message||'Unable to sign in. Please try again.')}
 }
 async function signOut(){if(cloud&&sb)await sb.auth.signOut();else{currentUser=null;showAuth()}}
 window.signOut=signOut;
