@@ -146,20 +146,23 @@ async function cloudInit(){
  const cfg=window.RYAL_SUPABASE||{};
  cloud=!!(window.supabase&&cfg.url&&cfg.anonKey);
  if(!cloud){$('cloudStatus').textContent='LOCAL DEMO';return false}
- sb=window.supabase.createClient(cfg.url,cfg.anonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
- const {data:{session},error:sessionError}=await sb.auth.getSession();
- if(sessionError){console.error(sessionError); setMsg(sessionError.message); showAuth(); return false;}
- if(session){await onSignedIn(session.user)} else showAuth();
- // Do not await Supabase/database calls inside onAuthStateChange.
- // Supabase recommends keeping this callback lightweight to avoid auth lock/deadlock.
- sb.auth.onAuthStateChange((_event,session)=>{
-   setTimeout(()=>{
-     if(session) onSignedIn(session.user).catch(e=>{console.error(e); setMsg(e.message||'Unable to load your account.')});
-     else showAuth();
-   },0);
- });
- $('cloudStatus').textContent='CLOUD';
- return true;
+ try{
+  sb=window.supabase.createClient(cfg.url,cfg.anonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  const {data,error}=await sb.auth.getSession();
+  if(error) throw error;
+  $('cloudStatus').textContent='CLOUD';
+  if(data?.session?.user){
+   currentUser=data.session.user; profile={full_name:currentUser.email||'User',role:'staff'};
+   hideAuth(); $('userBadge').textContent=currentUser.email||'User';
+   try{await loadAll()}catch(e){console.error('Cloud load:',e)}
+   setupUI();refresh();
+  } else showAuth();
+  sb.auth.onAuthStateChange((event,session)=>{
+   if(session?.user) currentUser=session.user;
+   else if(event==='SIGNED_OUT'){currentUser=null;showAuth();}
+  });
+  return true;
+ }catch(e){console.error('Supabase initialization:',e);$('cloudStatus').textContent='CLOUD ERROR';setMsg(e?.message||'Could not connect to Supabase.');showAuth();return false}
 }
 function showAuth(){ $('authScreen').style.display='flex'; document.querySelector('.layout').style.display='none'; document.querySelector('.app-header').style.display='none'; }
 function hideAuth(){ $('authScreen').style.display='none'; document.querySelector('.layout').style.display='grid'; document.querySelector('.app-header').style.display='block'; }
@@ -180,16 +183,24 @@ async function onSignedIn(user){
 }
 async function signIn(){
  const email=$('loginEmail').value.trim(), password=$('loginPassword').value;
- if(!cloud){setMsg('Cloud configuration is not enabled.');return}
+ if(!cloud||!sb){setMsg('Cloud is not connected.');return}
+ const btn=$('signInBtn'); if(btn){btn.disabled=true;btn.textContent='Signing in…'}
  setMsg('Signing in…');
  try{
-   const {data,error}=await sb.auth.signInWithPassword({email,password});
-   if(error){setMsg(error.message);return}
-   if(!data?.session||!data?.user){setMsg('Sign-in succeeded but no active session was returned. Please try again.');return}
-   // Complete the transition directly; the auth-state listener is only a backup.
-   await onSignedIn(data.user);
-   setMsg('');
- }catch(e){console.error(e);setMsg(e?.message||'Unable to sign in. Please try again.')}
+  const result=await sb.auth.signInWithPassword({email,password});
+  if(result.error) throw result.error;
+  const user=result.data?.user;
+  if(!user) throw new Error('No user session was returned by Supabase.');
+  currentUser=user;
+  profile={full_name:user.email||'User',role:'staff'};
+  hideAuth();
+  $('userBadge').textContent=user.email||'User';
+  setMsg('');
+  try{const {data:p}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();if(p){profile=p;$('userBadge').textContent=p.full_name||user.email||'User'}}catch(e){console.warn('Profile load:',e)}
+  try{await loadAll()}catch(e){console.error('Cloud load:',e)}
+  setupUI(); refresh();
+ }catch(e){console.error('Sign-in error:',e);setMsg(e?.message||'Unable to sign in. Please check your email and password.');}
+ finally{if(btn){btn.disabled=false;btn.textContent='Sign in'}}
 }
 async function signOut(){if(cloud&&sb)await sb.auth.signOut();else{currentUser=null;showAuth()}}
 window.signOut=signOut;
@@ -308,16 +319,11 @@ function exportCSV(){
 }
 window.nav=nav;window.renderReports=renderReports;window.exportCSV=exportCSV;
 document.addEventListener('DOMContentLoaded',async()=>{
-  if($('loginForm')) $('loginForm').onsubmit=e=>{e.preventDefault();signIn()};
-  const cfg=window.RYAL_SUPABASE||{};
-  if(!cfg.url||!cfg.anonKey){
-    showCloudSetup();
-    $('saveCfg').onclick=saveCloudConfig;
-    return;
-  }
-  await cloudInit();
-  if(!cloud){showCloudSetup();$('saveCfg').onclick=saveCloudConfig;return}
+ const btn=$('signInBtn'); if(btn) btn.onclick=signIn;
+ const form=$('loginForm'); if(form) form.onsubmit=e=>{e.preventDefault();return false};
+ const cfg=window.RYAL_SUPABASE||{};
+ if(!cfg.url||!cfg.anonKey){showCloudSetup();$('saveCfg').onclick=saveCloudConfig;return}
+ await cloudInit();
 });
-
 </script>
 </body></html>
