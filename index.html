@@ -95,6 +95,9 @@
         .tag-green { background: #dcfce7; color: #166534; }
         .tag-yellow { background: #fef3c7; color: #92400e; }
         .tag-red { background: #fee2e2; color: #991b1b; }
+        .tag-orange { background: #ffedd5; color: #c2410c; }
+        .tag-blue { background: #e0f2fe; color: #0369a1; }
+
 
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; padding: 16px; }
         .modal-overlay.active { display: flex; opacity: 1; }
@@ -274,53 +277,53 @@
         // Master Default Data (In case Firestore is empty)
         const defaults = {
             control: [
-                {"id":"PAV-001","zone":"Podium","name":"Multipurpose Court","status":"Pending"},
-                {"id":"PAV-002","zone":"Podium","name":"Spectator Plaza","status":"Pending"},
-                {"id":"PAV-003","zone":"Podium","name":"Indoor Badminton","status":"Pending"},
-                {"id":"PAV-004","zone":"Podium","name":"Amphitheatre","status":"Pending"},
-                {"id":"PAV-005","zone":"Podium","name":"Toddler's Play Area","status":"Pending"},
-                {"id":"PAV-006","zone":"Podium","name":"Kids Play Area","status":"Pending"},
-                {"id":"PAV-007","zone":"Podium","name":"Trampoline Park","status":"Pending"},
-                {"id":"PAV-008","zone":"Podium","name":"Parents Seating Area","status":"Pending"},
-                {"id":"PAV-009","zone":"Podium","name":"Open Turf","status":"Pending"},
-                {"id":"PAV-010","zone":"Podium","name":"Floral Gardens","status":"Pending"},
-                {"id":"STL-001","zone":"Stilt","name":"Club House","status":"Pending"},
-                {"id":"STL-002","zone":"Stilt","name":"Gym","status":"Pending"},
-                {"id":"STL-003","zone":"Stilt","name":"CrossFit Area","status":"Pending"},
-                {"id":"STL-004","zone":"Stilt","name":"Conference Room","status":"Pending"},
-                {"id":"STL-005","zone":"Stilt","name":"Mini Theatre","status":"Pending"},
-                {"id":"STL-006","zone":"Stilt","name":"Infinity Swimming Pool","status":"Pending"},
-                {"id":"STL-007","zone":"Stilt","name":"Kids Pool","status":"Pending"},
-                {"id":"STL-008","zone":"Stilt","name":"Massage Room","status":"Pending"},
-                {"id":"STL-009","zone":"Stilt","name":"Sundowner Party Zone","status":"Pending"},
-                {"id":"STL-010","zone":"Stilt","name":"Viewing Deck","status":"Pending"},
-                {"id":"STL-011","zone":"Stilt","name":"Senior Citizen Area","status":"Pending"},
-                {"id":"STL-012","zone":"Stilt","name":"Skating Rink","status":"Pending"},
-                {"id":"STL-013","zone":"Stilt","name":"Box Cricket","status":"Pending"},
-                {"id":"STL-014","zone":"Stilt","name":"Mini Golf","status":"Pending"},
-                {"id":"STL-015","zone":"Stilt","name":"Banquet Hall","status":"Pending"},
-                {"id":"STL-016","zone":"Stilt","name":"Celebration Lawn","status":"Pending"},
-                {"id":"STL-017","zone":"Stilt","name":"Barbeque Area","status":"Pending"},
-                {"id":"STL-018","zone":"Stilt","name":"Guest Room 1","status":"Pending"},
-                {"id":"STL-019","zone":"Stilt","name":"Guest Room 2","status":"Pending"},
-                {"id":"STL-020","zone":"Stilt","name":"Guest Room 3","status":"Pending"},
-                {"id":"STL-021","zone":"Stilt","name":"Guest Room 4","status":"Pending"},
-                {"id":"SKY-001","zone":"Top Floor","name":"Yoga & Meditation Deck","status":"Pending"},
-                {"id":"SKY-002","zone":"Top Floor","name":"Hammock Plaza","status":"Pending"},
-                {"id":"SKY-003","zone":"Top Floor","name":"Party Deck","status":"Pending"},
-                {"id":"SKY-004","zone":"Top Floor","name":"Mini Serving Counter","status":"Pending"},
-                {"id":"SKY-005","zone":"Top Floor","name":"Ball Pool Area","status":"Pending"},
-                {"id":"SKY-006","zone":"Top Floor","name":"Air Hockey","status":"Pending"},
-                {"id":"SKY-007","zone":"Top Floor","name":"PlayStation Zone","status":"Pending"},
-                {"id":"SKY-008","zone":"Top Floor","name":"Mini Futsal Area","status":"Pending"},
-                {"id":"SKY-009","zone":"Top Floor","name":"Indoor Games Area","status":"Pending"},
-                {"id":"SKY-010","zone":"Top Floor","name":"Carrom","status":"Pending"},
-                {"id":"SKY-011","zone":"Top Floor","name":"Cards","status":"Pending"},
-                {"id":"SKY-012","zone":"Top Floor","name":"Snooker","status":"Pending"},
-                {"id":"SKY-013","zone":"Top Floor","name":"Dance Studio","status":"Pending"},
-                {"id":"SKY-014","zone":"Top Floor","name":"Arts & Craft Room","status":"Pending"},
-                {"id":"SKY-015","zone":"Top Floor","name":"Toddler's Play Area","status":"Pending"},
-                {"id":"SKY-016","zone":"Top Floor","name":"Creche","status":"Pending"}
+                {"id":"PAV-001","zone":"Podium","name":"Multipurpose Court","status":"Pending","notes":""},
+                {"id":"PAV-002","zone":"Podium","name":"Spectator Plaza","status":"Pending","notes":""},
+                {"id":"PAV-003","zone":"Podium","name":"Indoor Badminton","status":"Pending","notes":""},
+                {"id":"PAV-004","zone":"Podium","name":"Amphitheatre","status":"Pending","notes":""},
+                {"id":"PAV-005","zone":"Podium","name":"Toddler's Play Area","status":"Pending","notes":""},
+                {"id":"PAV-006","zone":"Podium","name":"Kids Play Area","status":"Pending","notes":""},
+                {"id":"PAV-007","zone":"Podium","name":"Trampoline Park","status":"Pending","notes":""},
+                {"id":"PAV-008","zone":"Podium","name":"Parents Seating Area","status":"Pending","notes":""},
+                {"id":"PAV-009","zone":"Podium","name":"Open Turf","status":"Pending","notes":""},
+                {"id":"PAV-010","zone":"Podium","name":"Floral Gardens","status":"Pending","notes":""},
+                {"id":"STL-001","zone":"Stilt","name":"Club House","status":"Pending","notes":""},
+                {"id":"STL-002","zone":"Stilt","name":"Gym","status":"Pending","notes":""},
+                {"id":"STL-003","zone":"Stilt","name":"CrossFit Area","status":"Pending","notes":""},
+                {"id":"STL-004","zone":"Stilt","name":"Conference Room","status":"Pending","notes":""},
+                {"id":"STL-005","zone":"Stilt","name":"Mini Theatre","status":"Pending","notes":""},
+                {"id":"STL-006","zone":"Stilt","name":"Infinity Swimming Pool","status":"Pending","notes":""},
+                {"id":"STL-007","zone":"Stilt","name":"Kids Pool","status":"Pending","notes":""},
+                {"id":"STL-008","zone":"Stilt","name":"Massage Room","status":"Pending","notes":""},
+                {"id":"STL-009","zone":"Stilt","name":"Sundowner Party Zone","status":"Pending","notes":""},
+                {"id":"STL-010","zone":"Stilt","name":"Viewing Deck","status":"Pending","notes":""},
+                {"id":"STL-011","zone":"Stilt","name":"Senior Citizen Area","status":"Pending","notes":""},
+                {"id":"STL-012","zone":"Stilt","name":"Skating Rink","status":"Pending","notes":""},
+                {"id":"STL-013","zone":"Stilt","name":"Box Cricket","status":"Pending","notes":""},
+                {"id":"STL-014","zone":"Stilt","name":"Mini Golf","status":"Pending","notes":""},
+                {"id":"STL-015","zone":"Stilt","name":"Banquet Hall","status":"Pending","notes":""},
+                {"id":"STL-016","zone":"Stilt","name":"Celebration Lawn","status":"Pending","notes":""},
+                {"id":"STL-017","zone":"Stilt","name":"Barbeque Area","status":"Pending","notes":""},
+                {"id":"STL-018","zone":"Stilt","name":"Guest Room 1","status":"Pending","notes":""},
+                {"id":"STL-019","zone":"Stilt","name":"Guest Room 2","status":"Pending","notes":""},
+                {"id":"STL-020","zone":"Stilt","name":"Guest Room 3","status":"Pending","notes":""},
+                {"id":"STL-021","zone":"Stilt","name":"Guest Room 4","status":"Pending","notes":""},
+                {"id":"SKY-001","zone":"Top Floor","name":"Yoga & Meditation Deck","status":"Pending","notes":""},
+                {"id":"SKY-002","zone":"Top Floor","name":"Hammock Plaza","status":"Pending","notes":""},
+                {"id":"SKY-003","zone":"Top Floor","name":"Party Deck","status":"Pending","notes":""},
+                {"id":"SKY-004","zone":"Top Floor","name":"Mini Serving Counter","status":"Pending","notes":""},
+                {"id":"SKY-005","zone":"Top Floor","name":"Ball Pool Area","status":"Pending","notes":""},
+                {"id":"SKY-006","zone":"Top Floor","name":"Air Hockey","status":"Pending","notes":""},
+                {"id":"SKY-007","zone":"Top Floor","name":"PlayStation Zone","status":"Pending","notes":""},
+                {"id":"SKY-008","zone":"Top Floor","name":"Mini Futsal Area","status":"Pending","notes":""},
+                {"id":"SKY-009","zone":"Top Floor","name":"Indoor Games Area","status":"Pending","notes":""},
+                {"id":"SKY-010","zone":"Top Floor","name":"Carrom","status":"Pending","notes":""},
+                {"id":"SKY-011","zone":"Top Floor","name":"Cards","status":"Pending","notes":""},
+                {"id":"SKY-012","zone":"Top Floor","name":"Snooker","status":"Pending","notes":""},
+                {"id":"SKY-013","zone":"Top Floor","name":"Dance Studio","status":"Pending","notes":""},
+                {"id":"SKY-014","zone":"Top Floor","name":"Arts & Craft Room","status":"Pending","notes":""},
+                {"id":"SKY-015","zone":"Top Floor","name":"Toddler's Play Area","status":"Pending","notes":""},
+                {"id":"SKY-016","zone":"Top Floor","name":"Creche","status":"Pending","notes":""}
             ],
             hk: [{staff:'Staff 1', zone:'Podium', shift:'Morning'}],
             attendance: [{name:'Rahul (HK)', status:'Present', timeIn:'08:00'}],
@@ -373,7 +376,32 @@
         }
 
         window.renderAll = () => {
-            renderTable('control', ['Amenity ID', 'Name', 'Status', 'Actions'], window.db.control, (r, i) => `<td data-label="Amenity ID">${r.id || '-'}</td><td data-label="Name" style="font-weight:600;">${r.name}</td><td data-label="Status">${r.status==='Done'?'<span class="tag tag-green">Done</span>':'<span class="tag tag-yellow">Pending</span>'}</td><td data-label="Actions" class="actions-cell no-print"><button class="btn" onclick="toggleStatus('control',${i})">${r.status==='Done'?'Undo':'Complete'}</button> <button class="btn btn-danger" onclick="delRecord('control',${i})">✕</button></td>`);
+                        // Checklist with multiple status options and live notes input
+            renderTable('control', ['Amenity', 'Zone', 'Status', 'Issue / Notes', 'Actions'], window.db.control, (r, i) => {
+                let badgeClass = 'tag-yellow';
+                if(r.status === 'Done') badgeClass = 'tag-green';
+                if(r.status === 'Maintenance') badgeClass = 'tag-orange';
+                if(r.status === 'Under Construction') badgeClass = 'tag-blue';
+                if(r.status === 'Attention Needed') badgeClass = 'tag-red';
+
+                return `
+                    <td data-label="Amenity" style="font-weight:600;">${r.name} <br><small style="color:var(--text-muted); font-weight:normal;">${r.id||''}</small></td>
+                    <td data-label="Zone">${r.zone || '-'}</td>
+                    <td data-label="Status"><span class="tag ${badgeClass}">${r.status}</span></td>
+                    <td data-label="Issue / Notes"><input type="text" class="form-control" style="padding:6px; font-size:12px;" value="${r.notes || ''}" placeholder="Type issue/note..." onchange="updateVal('control', ${i}, 'notes', this.value)"></td>
+                    <td data-label="Actions" class="actions-cell no-print">
+                        <select class="form-control" style="padding:4px; font-size:12px;" onchange="setControlStatus(${i}, this.value)">
+                            <option value="" disabled selected>Change Status...</option>
+                            <option value="Done">Done</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Under Construction">Under Construction</option>
+                            <option value="Attention Needed">Attention Needed</option>
+                        </select>
+                        <button class="btn btn-danger" onclick="delRecord('control',${i})" style="padding:4px 8px;">✕</button>
+                    `;
+            });
+
             
             renderTable('hk', ['Staff', 'Zone', 'Shift', 'Actions'], window.db.hk, (r, i) => `<td data-label="Staff" style="font-weight:600;">${r.staff}</td><td data-label="Zone">${r.zone}</td><td data-label="Shift">${r.shift}</td><td class="actions-cell no-print"><button class="btn btn-danger" onclick="delRecord('hk',${i})">✕</button></td>`);
             
@@ -498,7 +526,7 @@
             const v = (id) => document.getElementById(id) ? document.getElementById(id).value : '';
             let newItem = {};
 
-            if(currentFormType === 'control') newItem = {id: v('f1'), name: v('f2')||'Unnamed', zone: v('f3'), status: 'Pending'};
+            if(currentFormType === 'control') newItem = {id: v('f1'), name: v('f2')||'Unnamed', zone: v('f3'), status: 'Pending', notes: '', notes: ''};
             if(currentFormType === 'hk') newItem = {staff: v('f1'), zone: v('f2'), shift: v('f3')};
             if(currentFormType === 'attendance') newItem = {name: v('f1'), status: 'Present', timeIn: v('f2')};
             if(currentFormType === 'pool') newItem = {time: v('f1'), ph: v('f2'), cl: v('f3'), status: "Logged"};
@@ -518,6 +546,18 @@
                 alert("Error saving to cloud: " + e.message);
             }
         };
+
+        window.setControlStatus = async (idx, newStatus) => {
+    const item = window.db.control[idx];
+    item.status = newStatus;
+    try {
+        await setDoc(doc(dbCloud, 'control_v4', item.id), item);
+        window.renderAll();
+    } catch(e) {
+        alert("Error updating status: " + e.message);
+    }
+};
+
 
         window.delRecord = async (type, idx) => {
             if(confirm('Delete this record?')) {
