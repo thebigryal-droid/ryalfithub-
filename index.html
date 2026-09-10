@@ -1,746 +1,596 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ryal Management</title>
-<style>
-:root{--ink:#24342d;--muted:#68756f;--bg:#f4f5f2;--card:#fff;--line:#dfe4df;--accent:#31483d;--accent2:#e9eeea;--danger:#9a4138;--shadow:0 5px 20px rgba(31,45,38,.06)}
-*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
-button,input,select,textarea{font:inherit}button{cursor:pointer}.app-header{background:var(--accent);color:#fff;padding:15px 18px;position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,.08)}
-.header-row{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-weight:850;letter-spacing:.12em}.tag{font-size:11px;opacity:.75;margin-top:3px}
-.layout{max-width:1200px;margin:auto;padding:14px;display:grid;grid-template-columns:210px 1fr;gap:14px}.nav{position:sticky;top:82px;height:max-content}.nav button{display:block;width:100%;text-align:left;border:1px solid var(--line);background:#fff;padding:11px 12px;margin-bottom:7px;border-radius:10px;color:var(--ink);font-weight:650}.nav button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-main{min-width:0}.view{display:none}.view.active{display:block}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px;margin-bottom:13px;box-shadow:var(--shadow)}
-h1{font-size:24px;margin:0 0 5px}h2{font-size:18px;margin:0 0 8px}h3{font-size:15px;margin:0 0 7px}.muted{color:var(--muted);font-size:13px}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric{border:1px solid var(--line);border-radius:12px;padding:13px;background:#fbfcfa}.metric span{display:block;color:var(--muted);font-size:12px}.metric b{font-size:23px;display:block;margin-top:4px}
-.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.field label{display:block;font-size:12px;color:var(--muted);font-weight:750;margin-bottom:5px}.field input,.field select,.field textarea{width:100%;padding:9px;border:1px solid #cbd4ce;border-radius:9px;background:#fff}.field textarea{min-height:75px;resize:vertical}
-.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}.btn{width:auto;border:1px solid #cbd4ce;background:#fff;padding:9px 12px;border-radius:9px;font-weight:700}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.danger{color:var(--danger)}
-table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);font-size:12px;vertical-align:top}th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
-.table-wrap{overflow:auto}.pill{display:inline-block;padding:4px 7px;border-radius:999px;background:var(--accent2);font-size:11px}.section-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}.hidden{display:none}
-@media(max-width:850px){.layout{grid-template-columns:1fr}.nav{position:static;display:flex;overflow:auto;gap:6px}.nav button{min-width:max-content;width:auto;margin:0}.grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:560px){.form-grid{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}.layout{padding:10px}.app-header{padding:12px}.brand{font-size:14px}}
-@media print{.app-header,.nav,.no-print{display:none!important}.layout{display:block;padding:0}.view{display:none!important}.view.printable{display:block!important}.card{box-shadow:none;border:0}}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Facility Executive OS (Cloud Powered)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #f3f4f6; --bg-surface: #ffffff;
+            --text-main: #111827; --text-muted: #6b7280;
+            --border-color: #e5e7eb; 
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --status-pending: #f59e0b; --status-done: #10b981; --status-alert: #ef4444;
+            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --shadow-float: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius-md: 12px; --radius-lg: 16px;
+        }
 
-.auth-screen{position:fixed;inset:0;background:#f5f7f5;display:flex;align-items:center;justify-content:center;padding:20px;z-index:9999}
-.auth-card{width:min(430px,100%);background:#fff;border:1px solid #dfe5df;border-radius:18px;padding:28px;box-shadow:0 18px 50px rgba(0,0,0,.08)}
-.auth-card .brand{font-size:22px;font-weight:800;letter-spacing:.08em}
-.auth-card h1{margin:26px 0 6px}.auth-card form{display:grid;gap:14px}.auth-card .btn{width:100%;margin-top:4px}
-.auth-note{font-size:12px;color:#69736b;margin-top:18px;line-height:1.5}
-.header-tools{display:flex;align-items:center;gap:8px}
-@media(max-width:760px){.header-tools .tag{display:none}.header-tools .btn{padding:7px 9px}.auth-card{padding:22px}}
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-body); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; font-size: 14px; -webkit-font-smoothing: antialiased; }
 
-.setup-screen{position:fixed;inset:0;background:#f5f7f5;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10000}.setup-screen .auth-card{max-height:92vh;overflow:auto}.keybox{min-height:110px;font-family:monospace;font-size:11px}.setup-screen .btn{width:100%;margin-top:10px}
-</style>
+        .top-header { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px); height: 64px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 50; }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .burger-btn { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; justify-content: space-around; width: 24px; height: 20px; }
+        .burger-btn span { display: block; width: 100%; height: 2px; background: var(--text-main); border-radius: 2px; }
+        .brand-title { font-size: 18px; font-weight: 700; color: var(--text-main); letter-spacing: -0.5px; }
+        
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .sync-badge { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 12px; background: #fee2e2; color: #991b1b; }
+        .sync-badge.synced { background: #dcfce7; color: #166534; }
+        .date-badge { font-size: 12px; font-weight: 600; color: var(--accent); background: #eff6ff; padding: 6px 12px; border-radius: 20px; }
+
+        .app-container { display: flex; flex: 1; overflow: hidden; position: relative; }
+        .sidebar { width: 280px; background: var(--bg-surface); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; position: absolute; height: 100%; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 40; overflow-y: auto; padding: 20px 0; }
+        .sidebar.open { transform: translateX(0); box-shadow: var(--shadow-float); }
+        @media (min-width: 1024px) {
+            .app-container.sidebar-active .main-content { margin-left: 280px; }
+            .app-container.sidebar-active .sidebar { position: static; transform: none; box-shadow: none; }
+        }
+
+        .nav-btn { background: none; border: none; color: var(--text-muted); padding: 12px 24px; margin: 4px 16px; border-radius: 8px; text-align: left; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s; display: flex; align-items: center; }
+        .nav-btn:hover { background: #f9fafb; color: var(--text-main); }
+        .nav-btn.active { color: var(--accent); font-weight: 600; background: #eff6ff; }
+
+        .main-content { flex: 1; padding: 24px; overflow-y: auto; width: 100%; transition: margin-left 0.3s ease; }
+        @media (max-width: 768px) { .main-content { padding: 16px; padding-bottom: 80px; } }
+        
+        .tab-content { display: none; animation: fadeUp 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); margin-bottom: 24px; box-shadow: var(--shadow-card); overflow: hidden; }
+        .card-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; background: #fff; }
+        .card-header h3 { font-size: 18px; font-weight: 600; color: var(--text-main); margin: 0; }
+        
+        .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-box { background: var(--bg-surface); padding: 20px; border: 1px solid var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
+        .stat-box .title { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-bottom: 8px; }
+        .stat-box .val { font-size: 32px; font-weight: 700; color: var(--text-main); line-height: 1; }
+
+        .data-container { width: 100%; }
+        .data-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .data-table th, .data-table td { padding: 16px 24px; border-bottom: 1px solid var(--border-color); }
+        .data-table th { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); background: #f9fafb; }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover { background: #f9fafb; }
+
+        @media (max-width: 768px) {
+            .data-table thead { display: none; }
+            .data-table, .data-table tbody, .data-table tr, .data-table td { display: block; width: 100%; }
+            .data-table tr { border-bottom: 12px solid var(--bg-body); padding: 16px; background: #fff; }
+            .data-table td { padding: 6px 0; border: none; display: flex; justify-content: space-between; align-items: center; text-align: right; }
+            .data-table td::before { content: attr(data-label); font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-right: auto; text-align: left; padding-right: 12px; }
+            .data-table td.actions-cell { justify-content: flex-end; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); }
+            .data-table td.actions-cell::before { content: none; }
+        }
+
+        .btn { background: #fff; border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-main); transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn:hover { background: #f3f4f6; }
+        .btn-primary { background: var(--accent); color: #fff; border: none; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-danger { background: #fff; color: var(--status-alert); border: 1px solid #fca5a5; }
+        .btn-danger:hover { background: #fef2f2; }
+        .flex-gap { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+        .fab { display: none; }
+        @media (max-width: 768px) {
+            .fab { display: flex; position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; border-radius: 28px; background: var(--accent); color: white; align-items: center; justify-content: center; font-size: 24px; box-shadow: var(--shadow-float); z-index: 45; border: none; cursor: pointer; }
+        }
+
+        .tag { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .tag-green { background: #dcfce7; color: #166534; }
+        .tag-yellow { background: #fef3c7; color: #92400e; }
+        .tag-red { background: #fee2e2; color: #991b1b; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; padding: 16px; }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal { background: var(--bg-surface); width: 100%; max-width: 480px; border-radius: var(--radius-lg); box-shadow: var(--shadow-float); transform: scale(0.95); transition: transform 0.2s; display: flex; flex-direction: column; max-height: 90vh; }
+        .modal-overlay.active .modal { transform: scale(1); }
+        .modal-header { padding: 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { font-size: 18px; font-weight: 700; margin: 0; }
+        .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); }
+        .modal-body { padding: 24px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .form-row { display: flex; gap: 16px; }
+        .form-row .form-group { flex: 1; }
+        .form-group label { font-size: 13px; font-weight: 600; color: var(--text-main); }
+        .form-control { padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; background: #f9fafb; }
+        .form-control:focus { background: #fff; border-color: var(--accent); outline: none; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+        .modal-footer { padding: 20px 24px; border-top: 1px solid var(--border-color); background: #f9fafb; display: flex; justify-content: flex-end; gap: 12px; border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+
+        .report-view { padding: 32px; background: #fff; }
+        .report-header { text-align: center; margin-bottom: 32px; border-bottom: 2px solid #000; padding-bottom: 16px; }
+        .report-title { font-size: 24px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .report-summary-paragraph { font-size: 15px; line-height: 1.8; margin-bottom: 32px; text-align: justify; }
+        .report-section-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; background: #f3f4f6; padding: 8px 12px; border-left: 4px solid var(--accent); }
+        
+        @media print {
+            body { background: #fff; }
+            .top-header, .sidebar, .btn, .no-print, .modal-overlay, .fab, .card-header .header-actions { display: none !important; }
+            .app-container { display: block; }
+            .main-content { margin: 0 !important; padding: 0 !important; overflow: visible; }
+            .card { border: none; box-shadow: none; margin-bottom: 0; border-radius: 0; }
+            .data-table thead { display: table-header-group !important; }
+            .data-table, .data-table tbody, .data-table tr, .data-table td { display: table !important; width: 100%; }
+            .data-table tr { display: table-row !important; border-bottom: 1px solid #000; padding: 0; }
+            .data-table td, .data-table th { display: table-cell !important; border: 1px solid #000; padding: 8px; text-align: left; }
+            .data-table td::before { content: none !important; }
+        }
+    </style>
 </head>
 <body>
 
-<div id="setupScreen" class="setup-screen" style="display:none">
-  <div class="auth-card">
-    <div class="brand">RYAL MANAGEMENT</div>
-    <div class="tag">CLOUD CONNECTION SETUP</div>
-    <h1>Connect Cloud</h1>
-    <p class="muted">Enter your Supabase Project URL and public publishable key once. They are stored only in this browser.</p>
-    <div class="field"><label>Supabase Project URL</label><input id="cfgUrl" type="url" placeholder="https://xxxxx.supabase.co"></div>
-    <div class="field"><label>Supabase Publishable Key</label><textarea id="cfgKey" class="keybox" placeholder="sb_publishable_..."></textarea></div>
-    <button id="saveCfg" class="btn primary">Save & Connect</button>
-    <div id="cfgMsg" class="muted"></div>
-  </div>
-</div>
-
-<div id="authScreen" class="auth-screen">
-      <div class="auth-card">
-        <div class="brand">RYAL MANAGEMENT</div>
-        <div class="tag">SECURE OPERATIONS PLATFORM</div>
-        <h1>Sign in</h1>
-        <p class="muted">Use your authorized Ryal Management account.</p>
-        <form id="loginForm">
-          <div class="field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username" required></div>
-          <div class="field"><label>Password</label><input id="loginPassword" type="password" autocomplete="current-password" required></div>
-          <button id="signInBtn" class="btn primary" type="submit">Sign in</button>
-          <div id="loginMsg" class="muted"></div>
-        </form>
-        <div class="auth-note">Cloud mode requires the Supabase URL and public anon/publishable key in <code>supabase.config.js</code>.</div>
-      </div>
-    </div>
-    
-<header class="app-header">
-  <div class="header-row">
-    <div>
-      <div class="brand">RYAL MANAGEMENT</div>
-      <div class="tag">ASHAR ARIZE COMMAND CENTRE</div>
-    </div>
-    <div class="header-tools">
-      <span id="cloudStatus" class="pill">LOCAL DEMO</span>
-      <span id="userBadge" class="tag"></span>
-      <button class="btn" onclick="signOut()">Sign out</button>
-    </div>
-  </div>
-</header>
-
-<div class="layout">
-<nav class="nav no-print">
-  <button data-view="dashboard" class="active" onclick="nav('dashboard')">Dashboard</button>
-  <button data-view="tasks" onclick="nav('tasks')">Daily Tasks</button>
-  <button data-view="bookings" onclick="nav('bookings')">Amenity Bookings</button>
-  <button data-view="maintenance" onclick="nav('maintenance')">Maintenance</button>
-  <button data-view="issues" onclick="nav('issues')">Issues & Complaints</button>
-  <button data-view="pool" onclick="nav('pool')">Pool Log</button>
-  <button data-view="staff" onclick="nav('staff')">Staff & Attendance</button>
-  <button data-view="daily" onclick="nav('daily')">Executive Daily Log</button>
-  <button data-view="reports" onclick="nav('reports')">Executive Reports</button>
-</nav>
-
-<main>
-<!-- DASHBOARD -->
-<section id="v-dashboard" class="view active">
-  <h1>Amenities Operations Dashboard</h1>
-  <p class="muted">Live daily command centre for Ashar Arize.</p>
-  <div id="dash"></div>
-</section>
-
-<!-- DAILY TASKS (from Control & Task Library) -->
-<section id="v-tasks" class="view">
-  <h1>Daily Amenity Tasks</h1>
-  <p class="muted">Record completion of daily cleaning and checks.</p>
-  <div class="card">
-    <div class="section-head"><h2>Today's Tasks</h2></div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Zone</th>
-            <th>Amenity</th>
-            <th>Task</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="taskRows"></tbody>
-      </table>
-    </div>
-  </div>
-</section>
-
-<!-- AMENITY BOOKINGS -->
-<section id="v-bookings" class="view">
-  <h1>Amenity Bookings</h1>
-  <p class="muted">Conflict-controlled booking register.</p>
-  <div class="card">
-    <h2>New booking</h2>
-    <form id="bookingForm">
-      <div class="form-grid">
-        <div class="field"><label>Date</label><input id="bdate" type="date" required></div>
-        <div class="field"><label>Amenity</label><select id="ban" required></select></div>
-        <div class="field"><label>Start Time</label><input id="bst" type="time" required></div>
-        <div class="field"><label>End Time</label><input id="ben" type="time" required></div>
-        <div class="field"><label>Flat No.</label><input id="bflat" required></div>
-        <div class="field"><label>Resident Name / Contact</label><input id="bres" required></div>
-        <div class="field"><label>Purpose</label><input id="bpurpose"></div>
-        <div class="field"><label>Status</label>
-          <select id="bstatus">
-            <option>Booked</option>
-            <option>Completed</option>
-            <option>Cancelled</option>
-            <option>No Show</option>
-          </select>
+    <header class="top-header">
+        <div class="header-left">
+            <button class="burger-btn no-print" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+            <div class="brand-title">Facility Exec OS</div>
         </div>
-      </div>
-      <div class="actions"><button class="btn primary">Save Booking</button></div>
-    </form>
-  </div>
-  <div class="card">
-    <div class="section-head"><h2>Booking Register</h2></div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Facility</th>
-            <th>Flat</th>
-            <th>Resident</th>
-            <th>Time</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="bookingRows"></tbody>
-      </table>
-    </div>
-  </div>
-</section>
-
-<!-- MAINTENANCE REGISTER -->
-<section id="v-maintenance" class="view">
-  <h1>Maintenance Register</h1>
-  <div class="card">
-    <form id="maintenanceForm">
-      <div class="form-grid">
-        <div class="field"><label>Asset ID</label><input id="m_assetid"></div>
-        <div class="field"><label>Zone</label>
-          <select id="m_zone">
-             <option>Podium</option>
-             <option>Stilt</option>
-             <option>Top Floor</option>
-          </select>
+        <div class="header-right">
+            <div class="sync-badge" id="syncStatus">Connecting...</div>
+            <div class="date-badge" id="currentDate"></div>
         </div>
-        <div class="field"><label>Amenity</label><select id="m_amenity" required></select></div>
-        <div class="field"><label>Equipment</label><input id="m_equip" required></div>
-        <div class="field"><label>Condition</label><input id="m_cond"></div>
-        <div class="field"><label>Status</label>
-          <select id="m_status">
-            <option>Open</option>
-            <option>In Progress</option>
-            <option>Closed</option>
-          </select>
+    </header>
+
+    <div class="app-container" id="app-container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <button class="nav-btn active" onclick="switchTab('dashboard')">Overview</button>
+            <button class="nav-btn" onclick="switchTab('daily_report'); buildSmartReport();">Executive Report</button>
+            <button class="nav-btn" onclick="switchTab('booking_report')">Booking Report</button>
+            <button class="nav-btn" onclick="switchTab('control')">Daily Checklist</button>
+            <button class="nav-btn" onclick="switchTab('hk_schedule')">HK Schedule</button>
+            <button class="nav-btn" onclick="switchTab('attendance')">Staff Attendance</button>
+            <button class="nav-btn" onclick="switchTab('pool')">Pool Logs</button>
+            <button class="nav-btn" onclick="switchTab('maintenance')">Maintenance</button>
+            <button class="nav-btn" onclick="switchTab('inventory')">Inventory</button>
+            <button class="nav-btn" onclick="switchTab('issues')">Complaints Log</button>
+            <button class="nav-btn" onclick="switchTab('manager_walk')">Manager's Walk</button>
+            <button class="nav-btn" onclick="switchTab('deep_clean')">Deep Cleaning</button>
+            <button class="nav-btn" onclick="switchTab('bookings')">Bookings</button>
+        </aside>
+
+        <main class="main-content" onclick="closeSidebarOnMobile()">
+            
+            <!-- DASHBOARD -->
+            <div id="tab-dashboard" class="tab-content active">
+                <h2 style="margin-bottom: 24px; font-weight: 700; font-size: 24px;">Facility Command Center</h2>
+                <div class="grid-stats">
+                    <div class="stat-box"><div class="title">Total Amenities</div><div class="val" id="dash-amenities">0</div></div>
+                    <div class="stat-box"><div class="title">Tasks Completed</div><div class="val" style="color:var(--status-done);" id="dash-completed">0</div></div>
+                    <div class="stat-box"><div class="title">Active Issues</div><div class="val" style="color:var(--status-alert);" id="dash-issues">0</div></div>
+                    <div class="stat-box"><div class="title">Today's Bookings</div><div class="val" id="dash-bookings">0</div></div>
+                </div>
+                <div class="card" style="max-width: 400px; padding: 24px; margin: 0 auto;">
+                    <h3 style="margin-bottom: 24px; text-align: center; font-size: 16px;">Daily Completion Status</h3>
+                    <canvas id="taskPieChart" width="200" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- DAILY REPORT -->
+            <div id="tab-daily_report" class="tab-content">
+                <div class="card">
+                    <div class="card-header no-print">
+                        <h3>Facility Generation Engine</h3>
+                        <div class="flex-gap">
+                            <select id="reportType" class="form-control" style="padding: 6px 12px;" onchange="buildSmartReport()">
+                                <option>Daily Report</option><option>Weekly Report</option><option>Monthly Report</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="window.print()">🖨️ Download PDF</button>
+                        </div>
+                    </div>
+                    <div class="report-view" id="smart-report-container"></div>
+                </div>
+            </div>
+
+            <!-- BOOKING REPORT -->
+            <div id="tab-booking_report" class="tab-content">
+                <div class="card">
+                    <div class="card-header no-print">
+                        <h3>Booking Report Filter</h3>
+                        <div class="flex-gap">
+                            <button class="btn" onclick="filterBookings('Yesterday')">Yesterday</button>
+                            <button class="btn" onclick="filterBookings('Today')">Today</button>
+                            <button class="btn btn-primary" onclick="window.print()">🖨️ Download PDF</button>
+                        </div>
+                    </div>
+                    <div class="data-container"><table class="data-table" id="tbl-booking-report"></table></div>
+                </div>
+            </div>
+
+            <!-- OTHER TABS -->
+            <div id="tab-control" class="tab-content">
+                <div class="card"><div class="card-header"><h3>Daily Checklist</h3><div class="flex-gap"><button class="btn" onclick="resetDB('control')">Reset Day</button><button class="btn btn-primary" onclick="openModal('control')">+ Add Task</button></div></div><div class="data-container"><table class="data-table" id="tbl-control"></table></div></div>
+                <button class="fab" onclick="openModal('control')">+</button>
+            </div>
+            <div id="tab-hk_schedule" class="tab-content"><div class="card"><div class="card-header"><h3>Housekeeping Schedule</h3><button class="btn btn-primary" onclick="openModal('hk')">+ Add</button></div><div class="data-container"><table class="data-table" id="tbl-hk"></table></div></div><button class="fab" onclick="openModal('hk')">+</button></div>
+            <div id="tab-attendance" class="tab-content"><div class="card"><div class="card-header"><h3>Staff Attendance</h3><div class="flex-gap"><button class="btn no-print" onclick="window.print()">PDF</button><button class="btn btn-primary" onclick="openModal('attendance')">+ Add</button></div></div><div class="data-container"><table class="data-table" id="tbl-attendance"></table></div></div><button class="fab" onclick="openModal('attendance')">+</button></div>
+            <div id="tab-pool" class="tab-content"><div class="card"><div class="card-header"><h3>Pool Logs</h3><div class="flex-gap"><button class="btn no-print" onclick="window.print()">PDF</button><button class="btn btn-primary" onclick="openModal('pool')">+ Log</button></div></div><div class="data-container"><table class="data-table" id="tbl-pool"></table></div></div><button class="fab" onclick="openModal('pool')">+</button></div>
+            <div id="tab-maintenance" class="tab-content"><div class="card"><div class="card-header"><h3>Maintenance Register</h3><button class="btn btn-primary" onclick="openModal('maintenance')">+ Log</button></div><div class="data-container"><table class="data-table" id="tbl-maintenance"></table></div></div><button class="fab" onclick="openModal('maintenance')">+</button></div>
+            <div id="tab-inventory" class="tab-content"><div class="card"><div class="card-header"><h3>Inventory Tracker</h3><button class="btn btn-primary" onclick="openModal('inventory')">+ Add</button></div><div class="data-container"><table class="data-table" id="tbl-inventory"></table></div></div><button class="fab" onclick="openModal('inventory')">+</button></div>
+            <div id="tab-issues" class="tab-content"><div class="card"><div class="card-header"><h3>Complaints Log</h3><button class="btn btn-danger" onclick="openModal('issues')">+ Issue</button></div><div class="data-container"><table class="data-table" id="tbl-issues"></table></div></div><button class="fab" onclick="openModal('issues')">+</button></div>
+            <div id="tab-manager_walk" class="tab-content"><div class="card"><div class="card-header"><h3>Manager's Walk</h3><button class="btn btn-primary" onclick="openModal('walk')">+ Walk</button></div><div class="data-container"><table class="data-table" id="tbl-walk"></table></div></div><button class="fab" onclick="openModal('walk')">+</button></div>
+            <div id="tab-deep_clean" class="tab-content"><div class="card"><div class="card-header"><h3>Deep Cleaning</h3><button class="btn btn-primary" onclick="openModal('deepclean')">+ Plan</button></div><div class="data-container"><table class="data-table" id="tbl-deepclean"></table></div></div><button class="fab" onclick="openModal('deepclean')">+</button></div>
+            <div id="tab-bookings" class="tab-content"><div class="card"><div class="card-header"><h3>Master Bookings</h3><button class="btn btn-primary" onclick="openModal('bookings')">+ Booking</button></div><div class="data-container"><table class="data-table" id="tbl-bookings"></table></div></div><button class="fab" onclick="openModal('bookings')">+</button></div>
+        </main>
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="formModal">
+        <div class="modal">
+            <div class="modal-header"><h3 id="modalTitle">Add Record</h3><button class="modal-close" onclick="closeModal()">&times;</button></div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveForm()">Save Record</button></div>
         </div>
-      </div>
-      <div class="actions"><button class="btn primary">Save Maintenance Log</button></div>
-    </form>
-  </div>
-  <div class="card">
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Asset ID</th>
-            <th>Zone</th>
-            <th>Amenity</th>
-            <th>Equipment</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="maintenanceRows"></tbody>
-      </table>
     </div>
-  </div>
-</section>
 
-<!-- ISSUES & COMPLAINTS -->
-<section id="v-issues" class="view">
-  <h1>Issues & Complaints</h1>
-  <div class="card">
-    <form id="issuesForm">
-      <div class="form-grid">
-        <div class="field"><label>Date</label><input id="i_date" type="date" required></div>
-        <div class="field"><label>Zone</label><input id="i_zone"></div>
-        <div class="field"><label>Amenity</label><select id="i_amenity"></select></div>
-        <div class="field"><label>Issue / Complaint</label><input id="i_desc" required></div>
-        <div class="field"><label>Priority</label>
-          <select id="i_pri">
-            <option>High</option>
-            <option>Medium</option>
-            <option>Low</option>
-          </select>
-        </div>
-        <div class="field"><label>Status</label>
-          <select id="i_status">
-            <option>Open</option>
-            <option>In Progress</option>
-            <option>Closed</option>
-          </select>
-        </div>
-      </div>
-      <div class="actions"><button class="btn primary">Save Issue</button></div>
-    </form>
-  </div>
-  <div class="card">
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Zone</th>
-            <th>Amenity</th>
-            <th>Issue</th>
-            <th>Priority</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="issueRows"></tbody>
-      </table>
-    </div>
-  </div>
-</section>
+    <!-- FIREBASE & CORE LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-<!-- POOL DAILY LOG -->
-<section id="v-pool" class="view">
-  <h1>Pool Daily Water & Safety Log</h1>
-  <div class="card">
-    <form id="poolForm">
-      <div class="form-grid">
-        <div class="field"><label>Date</label><input id="pdate" type="date" required></div>
-        <div class="field"><label>Time</label>
-           <select id="ptime">
-             <option>Morning</option>
-             <option>Evening</option>
-           </select>
-        </div>
-        <div class="field"><label>Water Clarity</label>
-          <select id="pclarity">
-             <option>Good</option>
-             <option>Cloudy</option>
-             <option>Poor</option>
-          </select>
-        </div>
-        <div class="field"><label>pH</label><input id="pph" type="number" step=".01"></div>
-        <div class="field"><label>Free Chlorine</label><input id="pfc" type="number" step=".01"></div>
-        <div class="field"><label>Temp °C</label><input id="ptemp" type="number" step=".1"></div>
-        <div class="field"><label>Deck Clean</label><input id="pdeck" type="checkbox"></div>
-        <div class="field"><label>Safety Equip OK</label><input id="psafety" type="checkbox"></div>
-      </div>
-      <div class="actions"><button class="btn primary">Save Pool Log</button></div>
-    </form>
-  </div>
-  <div class="card">
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Time</th>
-            <th>pH</th>
-            <th>Chlorine</th>
-            <th>Clarity</th>
-          </tr>
-        </thead>
-        <tbody id="poolRows"></tbody>
-      </table>
-    </div>
-  </div>
-</section>
-
-<!-- STAFF & ATTENDANCE -->
-<section id="v-staff" class="view">
-  <h1>Staff & Attendance</h1>
-  <div class="card">
-    <h2>Staff Master</h2>
-    <form id="staffForm">
-      <div class="form-grid">
-        <div class="field"><label>Staff Name</label><input id="sname" required></div>
-        <div class="field"><label>Department</label><select id="dept"></select></div>
-      </div>
-      <div class="actions"><button class="btn primary">Add Staff</button></div>
-    </form>
-  </div>
-  <div class="card">
-    <h2>Staff Register</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Staff</th>
-            <th>Department</th>
-          </tr>
-        </thead>
-        <tbody id="staffRows"></tbody>
-      </table>
-    </div>
-  </div>
-  <div class="card">
-    <h2>Attendance</h2>
-    <form id="attendanceForm">
-      <div class="form-grid">
-        <div class="field"><label>Date</label><input id="adate" type="date" required></div>
-        <div class="field"><label>Staff</label><select id="astaff" required></select></div>
-        <div class="field"><label>Status</label>
-          <select id="astatus">
-            <option>Present</option>
-            <option>Late</option>
-            <option>Leave / Off</option>
-          </select>
-        </div>
-      </div>
-      <div class="actions"><button class="btn primary">Save Attendance</button></div>
-    </form>
-  </div>
-  <div class="card">
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Staff</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="attendanceRows"></tbody>
-      </table>
-    </div>
-  </div>
-</section>
-
-<!-- EXECUTIVE DAILY LOG -->
-<section id="v-daily" class="view">
-  <h1>Executive Daily Log</h1>
-  <div class="card">
-    <form id="dailyForm">
-      <div class="form-grid">
-        <div class="field"><label>Date</label><input id="drdate" type="date" required></div>
-        <div class="field"><label>Prepared by</label><input id="drprepared"></div>
-        <div class="field"><label>Executive summary</label><textarea id="drsummary"></textarea></div>
-        <div class="field"><label>Key updates</label><textarea id="drupdates"></textarea></div>
-      </div>
-      <div class="actions"><button class="btn primary">Save Daily Report</button></div>
-    </form>
-  </div>
-  <div class="card">
-    <h2>Saved daily logs</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Prepared by</th>
-            <th>Summary</th>
-          </tr>
-        </thead>
-        <tbody id="dailyRows"></tbody>
-      </table>
-    </div>
-  </div>
-</section>
-
-<!-- REPORTS -->
-<section id="v-reports" class="view printable">
-  <h1>Executive Reports</h1>
-  <div class="card no-print">
-    <div class="form-grid">
-      <div class="field"><label>Start date</label><input id="reportStart" type="date" onchange="renderReports()"></div>
-      <div class="field"><label>End date</label><input id="reportEnd" type="date" onchange="renderReports()"></div>
-    </div>
-    <div class="actions">
-      <button class="btn primary" onclick="renderReports()">Generate Report</button>
-      <button class="btn" onclick="exportCSV()">Export CSV</button>
-      <button class="btn" onclick="window.print()">Print / Save PDF</button>
-    </div>
-  </div>
-  <div class="card">
-    <h2>Executive period summary</h2>
-    <p id="reportRange" class="muted"></p>
-    <div id="reportMetrics" class="grid"></div>
-  </div>
-</section>
-</main>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-(function(){
-  try{
-    const c=JSON.parse(localStorage.getItem('ryal_supabase_config')||'null');
-    if(c && c.url && c.anonKey) window.RYAL_SUPABASE=c;
-  }catch(e){console.warn('Config load failed',e)}
-})();
-
-// Expanded initial state based on Excel
-const DBKEY='ryal_ashar_arize_v1';
-const initial={
-  staff:[],
-  amenities:[
-    { "id": "PAV-001", "zone": "Podium", "name": "Multipurpose Court" },
-    { "id": "PAV-002", "zone": "Podium", "name": "Spectator Plaza" },
-    { "id": "PAV-003", "zone": "Podium", "name": "Indoor Badminton" },
-    { "id": "PAV-004", "zone": "Podium", "name": "Amphitheatre" },
-    { "id": "PAV-005", "zone": "Podium", "name": "Toddler's Play Area" },
-    { "id": "PAV-006", "zone": "Podium", "name": "Kids Play Area" },
-    { "id": "PAV-007", "zone": "Podium", "name": "Trampoline Park" },
-    { "id": "PAV-008", "zone": "Podium", "name": "Parents Seating Area" },
-    { "id": "PAV-009", "zone": "Podium", "name": "Open Turf" },
-    { "id": "PAV-010", "zone": "Podium", "name": "Floral Gardens" },
-    { "id": "STL-001", "zone": "Stilt", "name": "Club House" },
-    { "id": "STL-002", "zone": "Stilt", "name": "Gym" },
-    { "id": "STL-003", "zone": "Stilt", "name": "CrossFit Area" },
-    { "id": "STL-004", "zone": "Stilt", "name": "Conference Room" },
-    { "id": "STL-005", "zone": "Stilt", "name": "Mini Theatre" },
-    { "id": "STL-006", "zone": "Stilt", "name": "Infinity Swimming Pool" },
-    { "id": "STL-007", "zone": "Stilt", "name": "Kids Pool" },
-    { "id": "STL-008", "zone": "Stilt", "name": "Massage Room" },
-    { "id": "STL-009", "zone": "Stilt", "name": "Sundowner Party Zone" },
-    { "id": "STL-010", "zone": "Stilt", "name": "Viewing Deck" },
-    { "id": "STL-011", "zone": "Stilt", "name": "Senior Citizen Area" },
-    { "id": "STL-012", "zone": "Stilt", "name": "Skating Rink" },
-    { "id": "STL-013", "zone": "Stilt", "name": "Box Cricket" },
-    { "id": "STL-014", "zone": "Stilt", "name": "Mini Golf" },
-    { "id": "STL-015", "zone": "Stilt", "name": "Banquet Hall" },
-    { "id": "STL-016", "zone": "Stilt", "name": "Celebration Lawn" },
-    { "id": "STL-017", "zone": "Stilt", "name": "Barbeque Area" },
-    { "id": "STL-018", "zone": "Stilt", "name": "Guest Room 1" },
-    { "id": "STL-019", "zone": "Stilt", "name": "Guest Room 2" },
-    { "id": "STL-020", "zone": "Stilt", "name": "Guest Room 3" },
-    { "id": "STL-021", "zone": "Stilt", "name": "Guest Room 4" },
-    { "id": "SKY-001", "zone": "Top Floor", "name": "Yoga & Meditation Deck" },
-    { "id": "SKY-002", "zone": "Top Floor", "name": "Hammock Plaza" },
-    { "id": "SKY-003", "zone": "Top Floor", "name": "Party Deck" },
-    { "id": "SKY-004", "zone": "Top Floor", "name": "Mini Serving Counter" },
-    { "id": "SKY-005", "zone": "Top Floor", "name": "Ball Pool Area" },
-    { "id": "SKY-006", "zone": "Top Floor", "name": "Air Hockey" },
-    { "id": "SKY-007", "zone": "Top Floor", "name": "PlayStation Zone" },
-    { "id": "SKY-008", "zone": "Top Floor", "name": "Mini Futsal Area" },
-    { "id": "SKY-009", "zone": "Top Floor", "name": "Indoor Games Area" },
-    { "id": "SKY-010", "zone": "Top Floor", "name": "Carrom" },
-    { "id": "SKY-011", "zone": "Top Floor", "name": "Cards" },
-    { "id": "SKY-012", "zone": "Top Floor", "name": "Snooker" },
-    { "id": "SKY-013", "zone": "Top Floor", "name": "Dance Studio" },
-    { "id": "SKY-014", "zone": "Top Floor", "name": "Arts & Craft Room" },
-    { "id": "SKY-015", "zone": "Top Floor", "name": "Toddler's Play Area" },
-    { "id": "SKY-016", "zone": "Top Floor", "name": "Creche" }
-  ],
-  tasks:[
-    {id:'t1', date:new Date().toISOString().slice(0,10), zone:'Podium', amenity:'Multipurpose Court', task:'Glass & mirror cleaning', status:'Pending'}
-  ],
-  bookings:[],
-  maintenance:[],
-  issues:[],
-  attendance:[],
-  pool:[],
-  dailyReports:[],
-  staffDepartments:[{id:1, name:'Housekeeping'},{id:2, name:'Maintenance'},{id:3, name:'Security'}]
+        // ==========================================
+        // PASTE YOUR FIREBASE CONFIGURATION HERE:
+        // ==========================================
+        const firebaseConfig = {
+  apiKey: "AIzaSyCQpOgjjwsWrjLrckZxBtVgdFTYdjoPJBA",
+  authDomain: "client-perspective.firebaseapp.com",
+  projectId: "client-perspective",
+  storageBucket: "client-perspective.firebasestorage.app",
+  messagingSenderId: "389142464497",
+  appId: "1:389142464497:web:4e9663528a11ae3908a650"
 };
 
-let state=JSON.parse(localStorage.getItem(DBKEY)||JSON.stringify(initial));
-let cloud=false, sb=null, currentUser=null, profile=null;
-const $=id=>document.getElementById(id);
-const today=()=>new Date().toISOString().slice(0,10);
-const uid=()=>crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now();
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-const setMsg=(m)=>{if($('loginMsg'))$('loginMsg').textContent=m||''};
+        const app = initializeApp(firebaseConfig);
+        const dbCloud = getFirestore(app);
 
-function showCloudSetup() { $('setupScreen').style.display = 'flex'; }
-function saveCloudConfig() {
-  const url = $('cfgUrl').value.trim();
-  const anonKey = $('cfgKey').value.trim();
-  if (!url || !anonKey) { $('cfgMsg').textContent = 'Please enter both.'; return; }
-  const config = { url, anonKey };
-  localStorage.setItem('ryal_supabase_config', JSON.stringify(config));
-  window.RYAL_SUPABASE = config;
-  $('setupScreen').style.display = 'none';
-  cloudInit(); 
-}
+        const dateStr = new Date().toLocaleDateString('en-IN', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+        document.getElementById('currentDate').innerText = dateStr;
 
-function localPersist(){localStorage.setItem(DBKEY,JSON.stringify(state));refresh()}
+        window.toggleSidebar = () => { document.getElementById('app-container').classList.toggle('sidebar-active'); document.getElementById('sidebar').classList.toggle('open'); };
+        window.closeSidebarOnMobile = () => { if(window.innerWidth < 1024) { document.getElementById('app-container').classList.remove('sidebar-active'); document.getElementById('sidebar').classList.remove('open'); } };
 
-function nav(view){
- document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
- $('v-'+view).classList.add('active');
- document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.view===view));
- if(view==='reports')renderReports(); if(view==='dashboard')renderDashboard();
-}
+        window.switchTab = (tabId) => {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+            window.closeSidebarOnMobile();
+        };
 
-function selectOptions(arr,valueKey='id',labelKey='name'){return arr.map(x=>`<option value="${esc(x[valueKey])}">${esc(x[labelKey])}</option>`).join('')}
+        // Master Default Data (In case Firestore is empty)
+        const defaults = {
+            control: [
+                {"id":"PAV-001","zone":"Podium","name":"Multipurpose Court","status":"Pending"},
+                {"id":"PAV-002","zone":"Podium","name":"Spectator Plaza","status":"Pending"},
+                {"id":"PAV-003","zone":"Podium","name":"Indoor Badminton","status":"Pending"},
+                {"id":"PAV-004","zone":"Podium","name":"Amphitheatre","status":"Pending"},
+                {"id":"PAV-005","zone":"Podium","name":"Toddler's Play Area","status":"Pending"},
+                {"id":"PAV-006","zone":"Podium","name":"Kids Play Area","status":"Pending"},
+                {"id":"PAV-007","zone":"Podium","name":"Trampoline Park","status":"Pending"},
+                {"id":"PAV-008","zone":"Podium","name":"Parents Seating Area","status":"Pending"},
+                {"id":"PAV-009","zone":"Podium","name":"Open Turf","status":"Pending"},
+                {"id":"PAV-010","zone":"Podium","name":"Floral Gardens","status":"Pending"},
+                {"id":"STL-001","zone":"Stilt","name":"Club House","status":"Pending"},
+                {"id":"STL-002","zone":"Stilt","name":"Gym","status":"Pending"},
+                {"id":"STL-003","zone":"Stilt","name":"CrossFit Area","status":"Pending"},
+                {"id":"STL-004","zone":"Stilt","name":"Conference Room","status":"Pending"},
+                {"id":"STL-005","zone":"Stilt","name":"Mini Theatre","status":"Pending"},
+                {"id":"STL-006","zone":"Stilt","name":"Infinity Swimming Pool","status":"Pending"},
+                {"id":"STL-007","zone":"Stilt","name":"Kids Pool","status":"Pending"},
+                {"id":"STL-008","zone":"Stilt","name":"Massage Room","status":"Pending"},
+                {"id":"STL-009","zone":"Stilt","name":"Sundowner Party Zone","status":"Pending"},
+                {"id":"STL-010","zone":"Stilt","name":"Viewing Deck","status":"Pending"},
+                {"id":"STL-011","zone":"Stilt","name":"Senior Citizen Area","status":"Pending"},
+                {"id":"STL-012","zone":"Stilt","name":"Skating Rink","status":"Pending"},
+                {"id":"STL-013","zone":"Stilt","name":"Box Cricket","status":"Pending"},
+                {"id":"STL-014","zone":"Stilt","name":"Mini Golf","status":"Pending"},
+                {"id":"STL-015","zone":"Stilt","name":"Banquet Hall","status":"Pending"},
+                {"id":"STL-016","zone":"Stilt","name":"Celebration Lawn","status":"Pending"},
+                {"id":"STL-017","zone":"Stilt","name":"Barbeque Area","status":"Pending"},
+                {"id":"STL-018","zone":"Stilt","name":"Guest Room 1","status":"Pending"},
+                {"id":"STL-019","zone":"Stilt","name":"Guest Room 2","status":"Pending"},
+                {"id":"STL-020","zone":"Stilt","name":"Guest Room 3","status":"Pending"},
+                {"id":"STL-021","zone":"Stilt","name":"Guest Room 4","status":"Pending"},
+                {"id":"SKY-001","zone":"Top Floor","name":"Yoga & Meditation Deck","status":"Pending"},
+                {"id":"SKY-002","zone":"Top Floor","name":"Hammock Plaza","status":"Pending"},
+                {"id":"SKY-003","zone":"Top Floor","name":"Party Deck","status":"Pending"},
+                {"id":"SKY-004","zone":"Top Floor","name":"Mini Serving Counter","status":"Pending"},
+                {"id":"SKY-005","zone":"Top Floor","name":"Ball Pool Area","status":"Pending"},
+                {"id":"SKY-006","zone":"Top Floor","name":"Air Hockey","status":"Pending"},
+                {"id":"SKY-007","zone":"Top Floor","name":"PlayStation Zone","status":"Pending"},
+                {"id":"SKY-008","zone":"Top Floor","name":"Mini Futsal Area","status":"Pending"},
+                {"id":"SKY-009","zone":"Top Floor","name":"Indoor Games Area","status":"Pending"},
+                {"id":"SKY-010","zone":"Top Floor","name":"Carrom","status":"Pending"},
+                {"id":"SKY-011","zone":"Top Floor","name":"Cards","status":"Pending"},
+                {"id":"SKY-012","zone":"Top Floor","name":"Snooker","status":"Pending"},
+                {"id":"SKY-013","zone":"Top Floor","name":"Dance Studio","status":"Pending"},
+                {"id":"SKY-014","zone":"Top Floor","name":"Arts & Craft Room","status":"Pending"},
+                {"id":"SKY-015","zone":"Top Floor","name":"Toddler's Play Area","status":"Pending"},
+                {"id":"SKY-016","zone":"Top Floor","name":"Creche","status":"Pending"}
+            ],
+            hk: [{staff:'Staff 1', zone:'Podium', shift:'Morning'}],
+            attendance: [{name:'Rahul (HK)', status:'Present', timeIn:'08:00'}],
+            pool: [{time:'Morning', ph:'7.2', cl:'1.5', status:'Safe'}],
+            maintenance: [{asset:'Gym AC', date:'2026-09-10', action:'Filter Change'}],
+            inventory: [
+                {"item": "Glass cleaner", "stock": 15, "min": 10}, {"item": "Floor cleaner", "stock": 15, "min": 10},
+                {"item": "Disinfectant", "stock": 15, "min": 10}, {"item": "Toilet cleaner", "stock": 15, "min": 10},
+                {"item": "Microfiber cloths", "stock": 8, "min": 10}, {"item": "Glass squeegees", "stock": 15, "min": 10},
+                {"item": "Mop heads", "stock": 15, "min": 10}, {"item": "Garbage bags", "stock": 15, "min": 10},
+                {"item": "Gloves", "stock": 15, "min": 10}, {"item": "Paper towels", "stock": 15, "min": 10},
+                {"item": "Chlorine", "stock": 15, "min": 10}, {"item": "pH chemicals", "stock": 15, "min": 10},
+                {"item": "Test strips", "stock": 15, "min": 10}, {"item": "Light bulbs", "stock": 15, "min": 10},
+                {"item": "Batteries", "stock": 15, "min": 10}
+            ],
+            issues: [{source:'Client Complaint', desc:'Lobby light flickering', status:'Open'}],
+            walk: [{area:'Stilt Gym', finding:'Dust on mirrors', action:'Called HK'}],
+            deepclean: [{area:'Pool Deck', date:'2026-09-15', status:'Scheduled'}],
+            bookings: [{facility:'Banquet Hall', res:'Mr. Sharma', flat:'A-402', date:new Date().toISOString().split('T')[0], time:'18:00 to 22:00', status:'Confirmed'}]
+        };
 
-async function cloudInit(){
- const cfg=window.RYAL_SUPABASE||{};
- cloud=!!(window.supabase&&cfg.url&&cfg.anonKey);
- if(!cloud){$('cloudStatus').textContent='LOCAL DEMO';return false}
- try{
-  sb=window.supabase.createClient(cfg.url,cfg.anonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-  const {data,error}=await sb.auth.getSession();
-  if(error) throw error;
-  $('cloudStatus').textContent='CLOUD';
-  if(data?.session?.user){
-   currentUser=data.session.user; profile={full_name:currentUser.email||'User',role:'staff'};
-   hideAuth(); $('userBadge').textContent=currentUser.email||'User';
-   try{await loadAll()}catch(e){console.error('Cloud load:',e)}
-   setupUI();refresh();
-  } else showAuth();
-  sb.auth.onAuthStateChange((event,session)=>{
-   if(session?.user) currentUser=session.user;
-   else if(event==='SIGNED_OUT'){currentUser=null;showAuth();}
-  });
-  return true;
- }catch(e){console.error('Supabase initialization:',e);$('cloudStatus').textContent='CLOUD ERROR';setMsg(e?.message||'Could not connect to Supabase.');showAuth();return false}
-}
-function showAuth(){ $('authScreen').style.display='flex'; document.querySelector('.layout').style.display='none'; document.querySelector('.app-header').style.display='none'; }
-function hideAuth(){ $('authScreen').style.display='none'; document.querySelector('.layout').style.display='grid'; document.querySelector('.app-header').style.display='block'; }
+        window.db = {};
 
-async function signIn(){
- const email=$('loginEmail').value.trim(), password=$('loginPassword').value;
- if(!cloud||!sb){setMsg('Cloud is not connected.');return}
- const btn=$('signInBtn'); if(btn){btn.disabled=true;btn.textContent='Signing in…'}
- setMsg('Signing in…');
- try{
-  const result=await sb.auth.signInWithPassword({email,password});
-  if(result.error) throw result.error;
-  const user=result.data?.user;
-  currentUser=user;
-  hideAuth();
-  $('userBadge').textContent=user.email||'User';
-  setMsg('');
-  try{await loadAll()}catch(e){console.error('Cloud load:',e)}
-  setupUI(); refresh();
- }catch(e){console.error('Sign-in error:',e);setMsg(e?.message||'Unable to sign in.');}
- finally{if(btn){btn.disabled=false;btn.textContent='Sign in'}}
-}
+        async function loadCloudData() {
+            try {
+                const collections = Object.keys(defaults);
+                for(let col of collections) {
+                    const querySnapshot = await getDocs(collection(dbCloud, col));
+                    if(querySnapshot.empty) {
+                        // Populate defaults into Firestore if empty
+                        window.db[col] = [];
+                        for(let item of defaults[col]) {
+                            const docRef = await addDoc(collection(dbCloud, col), item);
+                            window.db[col].push({ id: docRef.id, ...item });
+                        }
+                    } else {
+                        window.db[col] = [];
+                        querySnapshot.forEach((docSnap) => {
+                            window.db[col].push({ id: docSnap.id, ...docSnap.data() });
+                        });
+                    }
+                }
+                document.getElementById('syncStatus').innerText = "Cloud Synced";
+                document.getElementById('syncStatus').classList.add('synced');
+                renderAll();
+            } catch(err) {
+                console.error("Firestore Error: ", err);
+                document.getElementById('syncStatus').innerText = "Sync Error";
+            }
+        }
 
-async function signOut(){if(cloud&&sb)await sb.auth.signOut();else{currentUser=null;showAuth()}}
-window.signOut=signOut;
+        window.renderAll = () => {
+            renderTable('control', ['Amenity ID', 'Name', 'Status', 'Actions'], window.db.control, (r, i) => `<td data-label="Amenity ID">${r.id || '-'}</td><td data-label="Name" style="font-weight:600;">${r.name}</td><td data-label="Status">${r.status==='Done'?'<span class="tag tag-green">Done</span>':'<span class="tag tag-yellow">Pending</span>'}</td><td data-label="Actions" class="actions-cell no-print"><button class="btn" onclick="toggleStatus('control',${i})">${r.status==='Done'?'Undo':'Complete'}</button> <button class="btn btn-danger" onclick="delRecord('control',${i})">✕</button></td>`);
+            
+            renderTable('hk', ['Staff', 'Zone', 'Shift', 'Actions'], window.db.hk, (r, i) => `<td data-label="Staff" style="font-weight:600;">${r.staff}</td><td data-label="Zone">${r.zone}</td><td data-label="Shift">${r.shift}</td><td class="actions-cell no-print"><button class="btn btn-danger" onclick="delRecord('hk',${i})">✕</button></td>`);
+            
+            renderTable('attendance', ['Staff Name', 'Status', 'Time In', 'Actions'], window.db.attendance, (r, i) => `<td data-label="Staff Name" style="font-weight:600;">${r.name}</td><td data-label="Status"><select class="form-control" style="padding:6px; font-size:12px; width:auto;" onchange="updateVal('attendance',${i},'status',this.value)"><option ${r.status==='Present'?'selected':''}>Present</option><option ${r.status==='Absent'?'selected':''}>Absent</option><option ${r.status==='Late'?'selected':''}>Late</option></select></td><td data-label="Time In">${r.timeIn}</td><td class="actions-cell no-print"><button class="btn btn-danger" onclick="delRecord('attendance',${i})">✕</button></td>`);
+            
+            renderTable('pool', ['Time', 'pH Level', 'Chlorine', 'Status', 'Actions'], window.db.pool, (r, i) => `<td data-label="Time" style="font-weight:600;">${r.time}</td><td data-label="pH Level">${r.ph}</td><td data-label="Chlorine">${r.cl} ppm</td><td data-label="Status">${r.status}</td><td class="actions-cell no-print"><button class="btn btn-danger" onclick="delRecord('pool',${i})">✕</button></td>`);
+            
+            renderTable('maintenance', ['Asset', 'Date', 'Action Taken', 'Actions'], window.db.maintenance, (r, i) => `<td data-label="Asset" style="font-weight:600;">${r.asset}</td><td data-label="Date">${r.date}</td><td data-label="Action">${r.action}</td><td class="actions-cell no-print"><button class="btn btn-danger" onclick="delRecord('maintenance',${i})">✕</button></td>`);
+            
+            renderTable('inventory', ['Item', 'Stock', 'Min Reorder', 'Actions'], window.db.inventory, (r, i) => `<td data-label="Item" style="font-weight:600;">${r.item}</td><td data-label="Stock">${r.stock < r.min ? `<span class="tag tag-red">${r.stock} (Low)</span>` : r.stock}</td><td data-label="Min Reorder">${r.min}</td><td class="actions-cell no-print"><button class="btn" onclick="updateStock(${i}, 1)">+</button> <button class="btn" onclick="updateStock(${i}, -1)">-</button> <button class="btn btn-danger" onclick="delRecord('inventory',${i})">✕</button></td>`);
+            
+            renderTable('issues', ['Source', 'Description', 'Status', 'Actions'], window.db.issues, (r, i) => `<td data-label="Source">${r.source==='Client Complaint'?'<span class="tag tag-red">Client</span>':'<span class="tag tag-yellow">Internal</span>'}</td><td data-label="Description" style="white-space:normal;">${r.desc}</td><td data-label="Status">${r.status==='Open'?'<span class="tag tag-yellow">Open</span>':'<span class="tag tag-green">Resolved</span>'}</td><td class="actions-cell no-print"><button class="btn" onclick="toggleStatus('issues',${i},'Open','Resolved')">Resolve</button> <button class="btn btn-danger" onclick="delRecord('issues',${i})">✕</button></td>`);
+            
+            renderTable('walk', ['Area Inspected', 'Finding', 'Corrective Action', 'Actions'], window.db.walk, (r, i) => `<td data-label="Area Inspected" style="font-weight:600;">${r.area}</td><td data-label="Finding" style="white-space:normal;">${r.finding}</td><td data-label="Corrective Action">${r.action}</td><td class="actions-cell no-print"><button class="btn btn-danger" onclick="delRecord('walk',${i})">✕</button></td>`);
+            
+            renderTable('deepclean', ['Area', 'Planned Date', 'Status', 'Actions'], window.db.deepclean, (r, i) => `<td data-label="Area" style="font-weight:600;">${r.area}</td><td data-label="Planned Date">${r.date}</td><td data-label="Status">${r.status==='Scheduled'?'<span class="tag tag-yellow">Scheduled</span>':'<span class="tag tag-green">Done</span>'}</td><td class="actions-cell no-print"><button class="btn" onclick="toggleStatus('deepclean',${i},'Scheduled','Done')">Complete</button> <button class="btn btn-danger" onclick="delRecord('deepclean',${i})">✕</button></td>`);
+            
+            renderTable('bookings', ['Date', 'Time', 'Facility', 'Resident', 'Flat', 'Status', 'Actions'], window.db.bookings, (r, i) => `<td data-label="Date">${r.date}</td><td data-label="Time">${r.time || '-'}</td><td data-label="Facility" style="font-weight:600;">${r.facility}</td><td data-label="Resident">${r.res}</td><td data-label="Flat">${r.flat}</td><td data-label="Status"><span class="tag tag-green">${r.status}</span></td><td class="actions-cell no-print"><button class="btn btn-danger" onclick="delRecord('bookings',${i})">✕</button></td>`);
 
-async function loadAll(){
- if(!cloud){
-   state=JSON.parse(localStorage.getItem(DBKEY)||JSON.stringify(initial));
-   // Safety check to ensure new arrays exist if loading from an older local storage save
-   ['tasks', 'maintenance', 'issues', 'pool', 'attendance'].forEach(k => {
-     if(!state[k]) state[k] = [];
-   });
-   return;
- }
- // Future Supabase query logic will go here
-}
+            filterBookings('All');
 
+            document.getElementById('dash-amenities').innerText = window.db.control.length;
+            document.getElementById('dash-completed').innerText = window.db.control.filter(a=>a.status==='Done').length;
+            document.getElementById('dash-issues').innerText = window.db.issues.filter(i=>i.status==='Open').length;
+            document.getElementById('dash-bookings').innerText = window.db.bookings.filter(b=>b.date===new Date().toISOString().split('T')[0]).length;
+            updateChart();
+        };
 
-async function save(table,row,conflictField){
- if(!cloud){
-   row.id = row.id || uid();
-   state[table].push(row);
-   localPersist();
-   return true;
- }
- // Cloud saving logic would go here
- return true; 
-}
+        function renderTable(tableId, headers, dataArray, rowTemplate) {
+            let html = `<thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>`;
+            if(!dataArray || dataArray.length === 0) html += `<tr><td colspan="${headers.length}" style="text-align:center; padding: 40px; color:var(--text-muted); border:none;">No records to display.</td></tr>`;
+            else dataArray.forEach((row, i) => { html += `<tr>${rowTemplate(row, i)}</tr>`; });
+            html += `</tbody>`;
+            const el = document.getElementById(`tbl-${tableId}`);
+            if(el) el.innerHTML = html;
+        }
 
-function completeTask(id) {
-  const task = state.tasks.find(t => t.id === id);
-  if (task) {
-    task.status = 'Completed';
-    localPersist();
-  }
-}
-window.completeTask = completeTask;
+        window.buildSmartReport = () => {
+            const reportType = document.getElementById('reportType').value;
+            const doneCount = window.db.control.filter(c=>c.status==='Done').length;
+            const totalCount = window.db.control.length;
+            const issueCount = window.db.issues.filter(i=>i.status==='Open').length;
+            
+            let paragraph = `This ${reportType.toLowerCase()} is generated on <strong>${dateStr}</strong>. The facility operations team oversaw <strong>${totalCount}</strong> key amenities. Out of these, <strong>${doneCount}</strong> have been successfully cleaned and prepped for resident usage. Currently, there are <strong>${issueCount}</strong> unresolved issues or complaints requiring executive attention. All pool readings are within safe parameters.`;
 
-function renderDashboard(){
- const d=today();
- const todaysTasks = state.tasks.filter(x=>x.date===d);
- const pendingTasks = todaysTasks.filter(x=>x.status!=='Completed').length;
- const completedTasks = todaysTasks.length - pendingTasks;
- const openIssues = state.issues.filter(x=>x.status!=='Closed').length;
- 
- $('dash').innerHTML=`
-  <div class="grid">
-    <div class="metric"><span>Tasks Pending</span><b>${pendingTasks}</b></div>
-    <div class="metric"><span>Tasks Completed</span><b>${completedTasks}</b></div>
-    <div class="metric"><span>Open Issues</span><b>${openIssues}</b></div>
-    <div class="metric"><span>Today's Bookings</span><b>${state.bookings.filter(x=>x.date===d).length}</b></div>
-  </div>`;
-}
+            let html = `
+                <div class="report-header">
+                    <div class="report-title">Facility Executive ${reportType}</div>
+                    <div style="font-size:13px; color:#666; margin-top:4px;">Generated on: ${dateStr} | Ashar Arize Operations</div>
+                </div>
+                <div class="report-summary-paragraph">${paragraph}</div>
+                <div class="report-section-title">1. Amenity Control Status</div>
+                <table class="data-table" style="margin-bottom: 32px; width:100%;">
+                    <thead><tr><th>Amenity</th><th>Zone</th><th>Status</th></tr></thead>
+                    <tbody>${window.db.control.map(c=>`<tr><td>${c.name}</td><td>${c.zone}</td><td style="font-weight:600; color:${c.status==='Done'?'#166534':'#92400e'}">${c.status}</td></tr>`).join('')}</tbody>
+                </table>
+                <div class="report-section-title">2. Active Issues & Complaints Log</div>
+                <table class="data-table" style="margin-bottom: 32px; width:100%;">
+                    <thead><tr><th>Source</th><th>Description</th><th>Status</th></tr></thead>
+                    <tbody>${window.db.issues.length ? window.db.issues.map(i=>`<tr><td>${i.source}</td><td>${i.desc}</td><td>${i.status}</td></tr>`).join('') : '<tr><td colspan="3" style="text-align:center;">No active issues.</td></tr>'}</tbody>
+                </table>
+            `;
+            document.getElementById('smart-report-container').innerHTML = html;
+        };
 
-function refresh(){renderDashboard();renderLists();updateSelectors()}
+        window.filterBookings = (filterType) => {
+            let filtered = window.db.bookings;
+            const today = new Date().toISOString().split('T')[0];
+            const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+            if(filterType === 'Today') filtered = window.db.bookings.filter(b => b.date === today);
+            if(filterType === 'Yesterday') filtered = window.db.bookings.filter(b => b.date === yesterday);
 
-function renderLists(){
- $('bookingRows').innerHTML=state.bookings.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.amenity)}</td><td>${esc(x.flat)}</td><td>${esc(x.resident)}</td><td>${x.start}–${x.end}</td><td><span class=pill>${esc(x.status)}</span></td></tr>`).join('')||'<tr><td colspan=6 class=muted>No bookings.</td></tr>';
- 
- $('taskRows').innerHTML=state.tasks.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.zone)}</td><td>${esc(x.amenity)}</td><td>${esc(x.task)}</td><td>${esc(x.status)}</td><td>${x.status!=='Completed' ? `<button onclick="completeTask('${x.id}')">Complete</button>` : ''}</td></tr>`).join('')||'<tr><td colspan=6 class=muted>No tasks.</td></tr>';
+            renderTable('booking-report', ['Date', 'Time', 'Facility', 'Resident', 'Flat', 'Status'], filtered, (r) => `<td data-label="Date">${r.date}</td><td data-label="Time">${r.time || '-'}</td><td data-label="Facility" style="font-weight:600;">${r.facility}</td><td data-label="Resident">${r.res}</td><td data-label="Flat">${r.flat}</td><td data-label="Status">${r.status}</td>`);
+        };
 
- $('maintenanceRows').innerHTML=state.maintenance.slice().reverse().map(x=>`<tr><td>${esc(x.assetId)}</td><td>${esc(x.zone)}</td><td>${esc(x.amenity)}</td><td>${esc(x.equip)}</td><td>${esc(x.status)}</td></tr>`).join('')||'<tr><td colspan=5 class=muted>No maintenance logs.</td></tr>';
+        let currentFormType = '';
+        window.openModal = (type) => {
+            currentFormType = type;
+            const body = document.getElementById('modalBody');
+            const title = document.getElementById('modalTitle');
+            let html = '';
 
- $('issueRows').innerHTML=state.issues.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.zone)}</td><td>${esc(x.amenity)}</td><td>${esc(x.desc)}</td><td>${esc(x.priority)}</td><td>${esc(x.status)}</td></tr>`).join('')||'<tr><td colspan=6 class=muted>No issues.</td></tr>';
+            if(type === 'control') {
+                title.innerText = 'Add Daily Task';
+                html = `<div class="form-group"><label>Amenity ID</label><input type="text" id="f1" class="form-control" placeholder="e.g. PAV-02"></div><div class="form-group"><label>Name</label><input type="text" id="f2" class="form-control" placeholder="e.g. Gym"></div><div class="form-group"><label>Zone</label><select id="f3" class="form-control"><option>Podium</option><option>Stilt</option><option>Top Floor</option></select></div>`;
+            } else if(type === 'hk') {
+                title.innerText = 'Add Housekeeping Schedule';
+                html = `<div class="form-group"><label>Staff Name</label><input type="text" id="f1" class="form-control"></div><div class="form-group"><label>Zone</label><input type="text" id="f2" class="form-control"></div><div class="form-group"><label>Shift</label><select id="f3" class="form-control"><option>Morning</option><option>Evening</option></select></div>`;
+            } else if(type === 'attendance') {
+                title.innerText = 'Log Attendance';
+                html = `<div class="form-group"><label>Staff Name</label><input type="text" id="f1" class="form-control"></div><div class="form-group"><label>Time In</label><input type="time" id="f2" class="form-control"></div>`;
+            } else if(type === 'pool') {
+                title.innerText = 'Log Pool Reading';
+                html = `<div class="form-group"><label>Time</label><select id="f1" class="form-control"><option>Morning</option><option>Evening</option></select></div><div class="form-group"><label>pH Level</label><input type="number" step="0.1" id="f2" class="form-control" placeholder="7.2"></div><div class="form-group"><label>Chlorine (ppm)</label><input type="number" step="0.1" id="f3" class="form-control" placeholder="1.5"></div>`;
+            } else if(type === 'maintenance') {
+                title.innerText = 'Log Maintenance';
+                html = `<div class="form-group"><label>Asset</label><input type="text" id="f1" class="form-control"></div><div class="form-group"><label>Date</label><input type="date" id="f2" class="form-control"></div><div class="form-group"><label>Action Taken</label><input type="text" id="f3" class="form-control"></div>`;
+            } else if(type === 'inventory') {
+                title.innerText = 'Add Inventory Item';
+                html = `<div class="form-group"><label>Item Name</label><input type="text" id="f1" class="form-control"></div><div class="form-group"><label>Stock</label><input type="number" id="f2" class="form-control" value="0"></div><div class="form-group"><label>Min Reorder</label><input type="number" id="f3" class="form-control" value="10"></div>`;
+            } else if(type === 'issues') {
+                title.innerText = 'Log Complaint';
+                html = `<div class="form-group"><label>Source</label><select id="f1" class="form-control"><option>Client Complaint</option><option>Internal Executive</option></select></div><div class="form-group"><label>Description</label><textarea id="f2" class="form-control" rows="3"></textarea></div>`;
+            } else if(type === 'walk') {
+                title.innerText = 'Manager Walk';
+                html = `<div class="form-group"><label>Area</label><input type="text" id="f1" class="form-control"></div><div class="form-group"><label>Finding</label><input type="text" id="f2" class="form-control"></div><div class="form-group"><label>Action</label><input type="text" id="f3" class="form-control"></div>`;
+            } else if(type === 'deepclean') {
+                title.innerText = 'Deep Cleaning Plan';
+                html = `<div class="form-group"><label>Area</label><input type="text" id="f1" class="form-control"></div><div class="form-group"><label>Date</label><input type="date" id="f2" class="form-control"></div>`;
+            } else if(type === 'bookings') {
+                title.innerText = 'New Booking';
+                html = `<div class="form-group"><label>Facility</label><select id="f1" class="form-control"><option>Banquet Hall</option><option>Mini Theatre</option><option>Conference Room</option></select></div><div class="form-group"><label>Resident Name</label><input type="text" id="f2" class="form-control"></div><div class="form-group"><label>Flat No.</label><input type="text" id="f3" class="form-control"></div><div class="form-group"><label>Date</label><input type="date" id="f4" class="form-control"></div><div class="form-row"><div class="form-group"><label>Start</label><input type="time" id="f5" class="form-control"></div><div class="form-group"><label>End</label><input type="time" id="f6" class="form-control"></div></div>`;
+            }
 
- $('poolRows').innerHTML=state.pool.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.time)}</td><td>${x.ph||'—'}</td><td>${x.fc||'—'}</td><td>${esc(x.clarity)}</td></tr>`).join('')||'<tr><td colspan=5 class=muted>No pool logs.</td></tr>';
+            body.innerHTML = html;
+            document.getElementById('formModal').classList.add('active');
+        };
 
- $('staffRows').innerHTML=state.staff.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.department)}</td></tr>`).join('')||'<tr><td colspan=2 class=muted>No staff.</td></tr>';
- 
- $('attendanceRows').innerHTML=state.attendance.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.staff)}</td><td>${esc(x.status)}</td></tr>`).join('')||'<tr><td colspan=3 class=muted>No attendance.</td></tr>';
- 
- $('dailyRows').innerHTML=state.dailyReports.slice().reverse().map(x=>`<tr><td>${x.date}</td><td>${esc(x.prepared)}</td><td>${esc(x.summary||'—')}</td></tr>`).join('')||'<tr><td colspan=3 class=muted>No daily reports.</td></tr>';
-}
+        window.closeModal = () => { document.getElementById('formModal').classList.remove('active'); };
 
-function updateSelectors(){
- const amOptions = selectOptions(state.amenities,'name','name');
- $('ban').innerHTML=amOptions;
- $('m_amenity').innerHTML=amOptions;
- $('i_amenity').innerHTML=amOptions;
- 
- $('astaff').innerHTML=selectOptions(state.staff,'name','name')||'<option value="">Add staff first</option>';
- $('dept').innerHTML=selectOptions(state.staffDepartments,'name','name');
-}
+        window.saveForm = async () => {
+            const v = (id) => document.getElementById(id) ? document.getElementById(id).value : '';
+            let newItem = {};
 
-function bindForms(){
- $('bookingForm').onsubmit=async e=>{
-  e.preventDefault();
-  const ok=await save('bookings',{date:$('bdate').value, amenity:$('ban').value, start:$('bst').value, end:$('ben').value, flat:$('bflat').value, resident:$('bres').value, purpose:$('bpurpose').value, status:$('bstatus').value});
-  if(ok){e.target.reset();$('bdate').value=today()}
- };
- 
- $('maintenanceForm').onsubmit=async e=>{
-   e.preventDefault();
-   const ok=await save('maintenance',{assetId:$('m_assetid').value, zone:$('m_zone').value, amenity:$('m_amenity').value, equip:$('m_equip').value, cond:$('m_cond').value, status:$('m_status').value});
-   if(ok){e.target.reset();}
- };
+            if(currentFormType === 'control') newItem = {id: v('f1'), name: v('f2')||'Unnamed', zone: v('f3'), status: 'Pending'};
+            if(currentFormType === 'hk') newItem = {staff: v('f1'), zone: v('f2'), shift: v('f3')};
+            if(currentFormType === 'attendance') newItem = {name: v('f1'), status: 'Present', timeIn: v('f2')};
+            if(currentFormType === 'pool') newItem = {time: v('f1'), ph: v('f2'), cl: v('f3'), status: "Logged"};
+            if(currentFormType === 'maintenance') newItem = {asset: v('f1'), date: v('f2'), action: v('f3')};
+            if(currentFormType === 'inventory') newItem = {item: v('f1'), stock: parseInt(v('f2'))||0, min: parseInt(v('f3'))||10};
+            if(currentFormType === 'issues') newItem = {source: v('f1'), desc: v('f2'), status: 'Open'};
+            if(currentFormType === 'walk') newItem = {area: v('f1'), finding: v('f2'), action: v('f3')};
+            if(currentFormType === 'deepclean') newItem = {area: v('f1'), date: v('f2'), status: 'Scheduled'};
+            if(currentFormType === 'bookings') newItem = {facility: v('f1'), res: v('f2'), flat: v('f3'), date: v('f4'), time: (v('f5')||'TBD')+' to '+(v('f6')||'TBD'), status: 'Confirmed'};
 
- $('issuesForm').onsubmit=async e=>{
-   e.preventDefault();
-   const ok=await save('issues',{date:$('i_date').value, zone:$('i_zone').value, amenity:$('i_amenity').value, desc:$('i_desc').value, priority:$('i_pri').value, status:$('i_status').value});
-   if(ok){e.target.reset();$('i_date').value=today()}
- };
+            try {
+                const docRef = await addDoc(collection(dbCloud, currentFormType), newItem);
+                window.db[currentFormType].unshift({ id: docRef.id, ...newItem });
+                window.renderAll();
+                window.closeModal();
+            } catch(e) {
+                alert("Error saving to cloud: " + e.message);
+            }
+        };
 
- $('poolForm').onsubmit=async e=>{
-   e.preventDefault();
-   const ok=await save('pool',{date:$('pdate').value, time:$('ptime').value, clarity:$('pclarity').value, ph:+$('pph').value, fc:+$('pfc').value, temp:+$('ptemp').value});
-   if(ok){e.target.reset();$('pdate').value=today()}
- };
- 
- $('staffForm').onsubmit=async e=>{
-   e.preventDefault();
-   const ok=await save('staff',{name:$('sname').value.trim(), department:$('dept').value});
-   if(ok){e.target.reset();}
- };
- 
- $('attendanceForm').onsubmit=async e=>{
-   e.preventDefault();
-   const ok=await save('attendance',{date:$('adate').value, staff:$('astaff').value, status:$('astatus').value});
-   if(ok){e.target.reset();$('adate').value=today()}
- };
+        window.delRecord = async (type, idx) => {
+            if(confirm('Delete this record?')) {
+                const item = window.db[type][idx];
+                try {
+                    await deleteDoc(doc(dbCloud, type, item.id));
+                    window.db[type].splice(idx, 1);
+                    window.renderAll();
+                } catch(e) {
+                    alert("Error deleting: " + e.message);
+                }
+            }
+        };
 
- $('dailyForm').onsubmit=async e=>{
-  e.preventDefault();
-  const ok=await save('dailyReports',{date:$('drdate').value, prepared:$('drprepared').value, summary:$('drsummary').value, updates:$('drupdates').value});
-  if(ok) {
-    alert('Report saved.');
-    e.target.reset(); // Add this line
-    $('drdate').value=today();
-  }
- };
+        window.toggleStatus = async (type, idx, s1='Pending', s2='Done') => {
+            const item = window.db[type][idx];
+            item.status = item.status === s1 ? s2 : s1;
+            try {
+                await setDoc(doc(dbCloud, type, item.id), item);
+                window.renderAll();
+            } catch(e) {
+                alert("Error updating: " + e.message);
+            }
+        };
 
-}
+        window.updateStock = async (idx, amt) => {
+            const item = window.db.inventory[idx];
+            if(item.stock + amt >= 0) {
+                item.stock += amt;
+                try {
+                    await setDoc(doc(dbCloud, 'inventory', item.id), item);
+                    window.renderAll();
+                } catch(e) {
+                    alert("Error updating stock: " + e.message);
+                }
+            }
+        };
 
-function setupUI(){
- ['bdate','i_date','pdate','adate','drdate','reportStart','reportEnd'].forEach(id=>{ if($(id)) $(id).value=today() });
- bindForms();
-}
+        window.updateVal = async (type, idx, key, val) => {
+            const item = window.db[type][idx];
+            item[key] = val;
+            try {
+                await setDoc(doc(dbCloud, type, item.id), item);
+            } catch(e) {
+                alert("Error updating: " + e.message);
+            }
+        };
 
-function renderReports(){
- let s=$('reportStart')?.value||today(),e=$('reportEnd')?.value||today();if(s>e)[s,e]=[e,s];
- const bs=state.bookings.filter(x=>x.date>=s&&x.date<=e);
- const iss=state.issues.filter(x=>x.date>=s&&x.date<=e);
- 
- $('reportMetrics').innerHTML=`<div class=metric><span>Bookings</span><b>${bs.length}</b></div><div class=metric><span>Issues Reported</span><b>${iss.length}</b></div>`;
- $('reportRange').textContent=`${s} to ${e}`;
-}
+        window.resetDB = async (type) => {
+            if(confirm('Reset all to pending?')) {
+                for(let item of window.db[type]) {
+                    item.status = 'Pending';
+                    await setDoc(doc(dbCloud, type, item.id), item);
+                }
+                window.renderAll();
+            }
+        };
 
-function exportCSV(){
- let s=$('reportStart').value,e=$('reportEnd').value;if(s>e)[s,e]=[e,s];
- const data=state.dailyReports.filter(x=>x.date>=s&&x.date<=e);
- const header=['Date','Prepared By','Executive Summary','Key Updates'];
- const rows=data.map(x=>[x.date,x.prepared,x.summary,x.updates]);
- const csv=[header,...rows].map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');
- const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
- const a=document.createElement('a');a.href=URL.createObjectURL(blob);
- a.download=`ryal-ashar-arize-report-${s}-to-${e}.csv`;a.click();URL.revokeObjectURL(a.href);
-}
-window.exportCSV = exportCSV;
+        let myChart = null;
+        function updateChart() {
+            const ctx = document.getElementById('taskPieChart').getContext('2d');
+            const done = window.db.control.filter(a=>a.status==='Done').length;
+            const pending = window.db.control.length - done;
+            if(myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: ['Completed', 'Pending'], datasets: [{ data: [done, pending], backgroundColor: ['#2563eb', '#cbd5e1'], borderWidth: 0 }] },
+                options: { responsive: true, cutout: '78%', plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12 }, usePointStyle: true, boxWidth: 8 } } } }
+            });
+        }
 
-
-document.addEventListener('DOMContentLoaded',async()=>{
- const btn=$('signInBtn'); if(btn) btn.onclick=signIn;
- const form=$('loginForm'); if(form) form.onsubmit=e=>{e.preventDefault();signIn();};
- const cfg=window.RYAL_SUPABASE||{};
- if(!cfg.url||!cfg.anonKey){
-   showCloudSetup();
-   $('saveCfg').onclick=saveCloudConfig;
-   return;
- }
- await cloudInit();
-});
-</script>
+        if(window.innerWidth > 1024) toggleSidebar();
+        loadCloudData();
+    </script>
 </body>
 </html>
